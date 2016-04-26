@@ -1,2 +1,4 @@
 # jiracmdline
-Command Line Interface to JIRA
+Cmdline interface to Jira
+
+Original version from @[ckerner](https://github.com/ckerner)
