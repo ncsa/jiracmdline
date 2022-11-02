@@ -9,14 +9,18 @@ import os
 import ConfigParser
 import jira
 
+# Hash to hold module level data
+resources = {}
 
-# module level varibale to hold jira connection
-conn = None
-# module level variable to hold cmdline args
-args = None
+# # module level varibale to hold jira connection
+# conn = None
+# # module level variable to hold cmdline args
+# args = None
 
 
-def parse_cmdline():
+# def parse_cmdline():
+def get_args():
+    if 'args' not in resources:
     desc = "List or modify jira tickets."
     epilog = """List or modify jira tickets.  Ticket ID's can be passed on cmdline or
         stdin.  The \"Modification\" options require a list of tickets to be
