@@ -4,7 +4,8 @@ Cmdline interface to Jira
 # Quick start
 1. Start Docker container
 ```
-curl https://raw.githubusercontent.com/ncsa/jiracmdline/main/go.sh | bash
+curl -O https://raw.githubusercontent.com/ncsa/jiracmdline/main/go.sh ; bash
+./go.sh ; rm ./go.sh
 ```
 1. Link sub-Tasks as children of their parent
 ```

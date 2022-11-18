@@ -1,10 +1,10 @@
 #!/usr/local/bin/python3
 
 import argparse
-import jiralib as jl
 import logging
 import pprint
-
+import urllib
+import jiralib as jl
 
 # Module level resources
 logr = logging.getLogger( __name__ )
@@ -16,39 +16,42 @@ def get_args():
     if key not in resources:
         constructor_args = {
             'formatter_class': argparse.RawDescriptionHelpFormatter,
-            'description': 'Show summary of tasks.',
-            'epilog': 'NETRC:'
-                '    Jira login credentials should be stored in ~/.netrc.'
-                '    Machine name should be hostname only.'
+            'description': 'Create "child of" link from sub-tasks of parent',
+            'epilog': '''
+NETRC:
+    Jira login credentials should be stored in ~/.netrc.
+    Machine name should be hostname only.
+            '''
             }
         parser = argparse.ArgumentParser( **constructor_args )
         parser.add_argument( '-d', '--debug', action='store_true' )
         parser.add_argument( '-v', '--verbose', action='store_true' )
-        parser.add_argument( '--dump', action='store_true',
-            help='Dump raw json returned from Jira API .' )
+        parser.add_argument( '-n', '--dryrun', action='store_true',
+            help='Show what would be done but make no changes.' )
+        parser.add_argument( '-P', '--parent', required=True,
+            help='The ticket to link as "Parent".' )
         parser.add_argument( 'issues', nargs='+' )
-        resources[key] = parser.parse_args()
+        args = parser.parse_args()
+        resources[key] = args
     return resources[key]
-
-
-def print_issue_dump( issue ):
-    pprint.pprint( issue.raw )
 
 
 def run():
     args = get_args()
 
-    # determine action to take
-    action = jl.print_issue_summary
-    if args.dump:
-        action = print_issue_dump
-
-    # get issues from jira
+    # link tasks to parent
+    parent = jl.get_issue_by_key( args.parent )
     issues = jl.get_issues_by_keys( args.issues )
     for i in issues:
-        action( i )
+        jl.link_to_parent( i, parent, args.dryrun )
 
-    # TODO - recurse for all child tasks (allow both sub-tasks and linked children)
+    # add tasks to parent's epic
+    epic = jl.get_epic_name( parent )
+    if epic:
+        jl.add_tasks_to_epic( issues, epic )
+
+    # new summary of parent
+    jl.print_issue_summary( parent )
 
 
 if __name__ == '__main__':
@@ -56,7 +59,7 @@ if __name__ == '__main__':
 
     # configure logging
     loglvl = logging.WARNING
-    if args.verbose:
+    if args.verbose or args.dryrun:
         loglvl = logging.INFO
     if args.debug:
         loglvl = logging.DEBUG
