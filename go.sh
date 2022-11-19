@@ -1,4 +1,4 @@
-DEBUG=1
+DEBUG=0
 REPO=andylytical/jiracmdline
 
 function latest_tag {
