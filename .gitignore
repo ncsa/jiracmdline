@@ -1,6 +1,8 @@
 # Custom
 *.cfg
+*.dump
 *.out
+TODO
 output
 
 # Byte-compiled / optimized / DLL files

@@ -87,6 +87,18 @@ def get_project_key( issue ):
     return issue.key.split('-')[0]
 
 
+def get_issues_in_epic( issue, include_completed_issues=False ):
+    jql = f'"Epic Link" = {issue.key}'
+    if include_completed_issues:
+        jql = f'{jql} and resolved is empty'
+    return get_jira().search_issues( jql, maxResults=9999 )
+
+
+def get_stories_in_epic( issue ):
+    children = get_issues_in_epic( issue )
+    return [ i for i in children if i.fields.issuetype.name == 'Story' ]
+
+
 def get_linked_issues( issue ):
     linked_issues = []
     for link in issue.fields.issuelinks:
