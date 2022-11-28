@@ -41,7 +41,7 @@ def print_issue_dump( issue ):
 def print_issue_hierarchy( issue ):
     tr = asciitree.LeftAligned()
     tree = _get_children( issue )
-    pprint.pprint( tree )
+    # pprint.pprint( tree )
     print( tr( tree ) )
 
 

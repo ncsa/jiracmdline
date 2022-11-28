@@ -4,28 +4,45 @@ Cmdline interface to Jira
 # Quick start
 1. Start Docker container
 ```
-curl -O https://raw.githubusercontent.com/ncsa/jiracmdline/main/go.sh
-bash ./go.sh
+curl -o go_jira.sh https://raw.githubusercontent.com/ncsa/jiracmdline/main/go.sh
+bash ./go_jira.sh
 ```
-1. Link sub-Tasks as children of their parent
+
+### View task details
 ```
-cd /srv
-./subtask_link_as_child.py --help
-./subtask_link_as_child.py SVCPLAN-200 SVCPLAN-201 SVCPLAN-202
-./subtask_link_as_child.py SVCPLAN-{300..305}
-./subtask_link_as_child.py --parents SVCPLAN-101 SVCPLAN-157
+./summary.py svcplan-2023 svcplan-2467
 ```
-1. Add "linked children" to the same epic as their parent
+
+### View Epic-Story-Task tree
+```
+./summary.py --recurse svcplan-2023
+```
+
+### Link sub-Tasks as children of their parent
+```
+./mk_children_from_subtasks.py --help
+./mk_children_from_subtasks.py SVCPLAN-200 SVCPLAN-201 SVCPLAN-202
+./mk_children_from_subtasks.py SVCPLAN-{300..305}
+./mk_children_from_subtasks.py --parents SVCPLAN-101 SVCPLAN-157
+```
+
+### Add "linked children" to the same epic as their parent
 ```
 ./add_linked_children_to_epic.py SVCPLAN-200 SVCPLAN-201 SVCPLAN-202
 ./add_linked_children_to_epic.py SVCPLAN-{300..305}
 ./add_linked_children_to_epic.py --parents SVCPLAN-101 SVCPLAN-157
 ```
-1. Find all linked children that don't have an epic
+
+### Find all linked children that don't have an epic
+... (and add them to their respective parent's epic)
 ```
+./add_linked_children_to_epic.py --dryrun --project SVCPLAN
 ./add_linked_children_to_epic.py --project SVCPLAN
 ```
-1. Create linked children from description (also add to parent's epic)
+
+### Create linked children from description (also add to parent's epic)
+Will read bulleted list, numbered list, or plain lines
+(each line becomes a single child Task)
 ```
 ./mk_children_from_description.py SVCPLAN-2511
 ```

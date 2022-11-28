@@ -1,5 +1,0 @@
-[Connection]
-jirauser: username
-jirapass: userpass
-jiraserver: https://yourjira.mycompany.com
-jiraproject: MYDEAFAULTPROJECT
