@@ -21,4 +21,5 @@ tag=$(latest_tag)
 docker run --rm -it --pull always \
 --mount type=bind,src=$HOME,dst=/home \
 -e JIRA_SERVER=jira.ncsa.illinois.edu \
+-e JIRA_DEFAULT_PROJECT=SVCPLAN \
 $REPO:$tag

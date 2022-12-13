@@ -2,4 +2,4 @@
 
 ./devsetup.sh
 
-jirashell -s https://jira.ncsa.illinois.edu
+jirashell -s https://jira.ncsa.illinois.edu $*

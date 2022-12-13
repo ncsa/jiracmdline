@@ -1,8 +1,11 @@
+import csv
 import os
 import collections
 import jira
 import logging
 import pprint
+import netrc
+import dataclasses
 
 # Module level resources
 logr = logging.getLogger( __name__ )
@@ -14,11 +17,44 @@ Linked_Issue = collections.namedtuple(
     ['remote_issue','link_type','direction'] )
 
 
+# Custom Sprint class
+@dataclasses.dataclass
+class Sprint:
+    ''' Python representation of a Sprint '''
+    id: str
+    rapidViewId: int
+    state: str
+    name: str
+    startDate: str
+    endDate: str
+    completeDate: str
+    activatedDate: str
+    sequence: int
+    goal: str
+    autoStartStop: bool
+
+    def is_active( self ):
+        return self.state == 'ACTIVE'
+
+# Convenience data structures for creating instances of Sprint
+sprint_fields = { f.name:f for f in dataclasses.fields( Sprint ) }
+sprint_field_names = sprint_fields.keys()
+
+
 def get_jira():
     key = 'jira_connection'
     if key not in resources:
         jira_server = os.getenv( 'JIRA_SERVER' )
-        resources[key] = jira.JIRA( server=f'https://{jira_server}' )
+        # attempt to get user,pass from netrc file
+        nrc = netrc.netrc()
+        login, account, pwd = nrc.authenticators( jira_server )
+        # logr.debug( f'USR:{login} PWD:{pwd}' )
+        params = {
+            'server': f'https://{jira_server}',
+            'basic_auth': ( login, pwd ),
+        }
+        # logr.debug( pprint.pformat( [ 'LOGIN', params ] ) )
+        resources[key] = jira.JIRA( **params )
     return resources[key]
 
 
@@ -154,6 +190,66 @@ def add_tasks_to_epic( issue_list, epic_key ):
     result = get_jira().add_issues_to_epic( **params )
     logr.debug( f"Add to epic results: '{pprint.pformat( result ) }'" )
     result.raise_for_status() # https://requests.readthedocs.io/en/latest/api/#requests.Response
+
+
+def mk_child_tasks( parent, child_summaries, dryrun=False ):
+    ''' parent: parent Story ticket
+        child_summaries: list of strings, each is the summary for a new ticket
+    '''
+    defaults = {
+        'project': { 'key': get_project_key( parent ) },
+        'issuetype': { 'name': 'Task' },
+    }
+    issue_list = []
+    for summary in child_summaries:
+        custom_parts = { 'summary': summary[0:254] }
+        issue_list.append( defaults | custom_parts )
+    logr.debug( f'About to create {pprint.pformat( issue_list )}' )
+    child_issues = []
+    if not dryrun:
+        new_tasks = get_jira().create_issues( field_list=issue_list )
+        for result in new_tasks:
+            if result['status'] == 'Success':
+                child = result['issue']
+                logr.info( f"Created issue: {child}" )
+                link_to_parent( child=child, parent=parent )
+                child_issues.append( child )
+            else:
+                logr.warn( f"Error creating child ticket: '{pprint.pformat( result )}'" )
+    return child_issues
+
+
+def get_sprint_memberships( issue ):
+    memberships = issue.fields.customfield_10535
+    # try:
+    #     memberships = issue.fields.customfield_10535
+    # except AttributeError:
+    #     i = reload_issue( issue )
+    #     memberships = i.fields.customfield_10535
+    sprints = []
+    for line in memberships:
+            sprints.append( _str_to_sprint( line ) )
+    return sprints
+
+
+def _str_to_sprint( line ):
+    ''' Parse a line from customfield_10535
+        return an instance of a Sprint
+    '''
+    if not line.startswith( 'com.atlassian.greenhopper.service.sprint.Sprint' ):
+        raise UserWarning( f"line doesn't look like a sprint: '{line}'" )
+    csv_start = line.index( '[' ) + 1
+    raw_csv = line[csv_start:-1]
+    # return csv
+    reader = csv.reader( [raw_csv] )
+    # for row in reader:
+    row = next(reader)
+    sprint_data = {}
+    for elem in row:
+        (k,v) = elem.split( '=', maxsplit=1 )
+        if k in sprint_field_names:
+            sprint_data[k] = sprint_fields[k].type( v )
+    return Sprint( **sprint_data )
 
 
 if __name__ == '__main__':

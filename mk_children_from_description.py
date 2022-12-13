@@ -43,40 +43,41 @@ def mk_children_from_description( issue ):
     args = get_args()
     j = jl.get_jira()
     summaries = split_issue_description( issue )
-    defaults = {
-        'project': { 'key': jl.get_project_key( issue ) },
-        'issuetype': { 'name': 'Task' },
-        }
-    issue_list = []
-    for summary in summaries:
-        # max summary size is 254
-        custom_parts = { 'summary': summary[0:254] }
-        issue_list.append( defaults | custom_parts )
-    #DEBUGGING --- DO ONLY ONE TASK --- REMOVE FOR PRODUCTION
-    # issue_list = issue_list[0:1]
-    logr.debug( f'About to create {pprint.pformat( issue_list )}' )
-    child_issues = []
-    if not args.dryrun:
-        new_tasks = j.create_issues( field_list=issue_list )
+    children = jl.mk_child_tasks( parent=issue, child_summaries=summaries )
+    #defaults = {
+    #    'project': { 'key': jl.get_project_key( issue ) },
+    #    'issuetype': { 'name': 'Task' },
+    #    }
+    #issue_list = []
+    #for summary in summaries:
+    #    # max summary size is 254
+    #    custom_parts = { 'summary': summary[0:254] }
+    #    issue_list.append( defaults | custom_parts )
+    ##DEBUGGING --- DO ONLY ONE TASK --- REMOVE FOR PRODUCTION
+    ## issue_list = issue_list[0:1]
+    #logr.debug( f'About to create {pprint.pformat( issue_list )}' )
+    #child_issues = []
+    #if not args.dryrun:
+    #    new_tasks = j.create_issues( field_list=issue_list )
 
-        # logr.debug( f'New tasks: {pprint.pformat( new_tasks )}' )
-        # check success
-        for result in new_tasks:
-            # Result: {
-            #     'error': None,
-            #     'input_fields': {'issuetype': {'name': 'Task'},
-            #                      'project': {'key': 'SVCPLAN'},
-            #                      'summary': 'One Use cases and documentation of such'},
-            #     'issue': <JIRA Issue: key='SVCPLAN-2498', id='294950'>,
-            #     'status': 'Success' }
-            if result['status'] == 'Success':
-                child = result['issue']
-                logr.info( f"Created issue: {child}" )
-                jl.link_to_parent( child=child, parent=issue )
-                child_issues.append( child )
-            else:
-                logr.warn( f"Error creating child ticket: '{pprint.pformat( result )}'" )
-    return child_issues
+    #    # logr.debug( f'New tasks: {pprint.pformat( new_tasks )}' )
+    #    # check success
+    #    for result in new_tasks:
+    #        # Result: {
+    #        #     'error': None,
+    #        #     'input_fields': {'issuetype': {'name': 'Task'},
+    #        #                      'project': {'key': 'SVCPLAN'},
+    #        #                      'summary': 'One Use cases and documentation of such'},
+    #        #     'issue': <JIRA Issue: key='SVCPLAN-2498', id='294950'>,
+    #        #     'status': 'Success' }
+    #        if result['status'] == 'Success':
+    #            child = result['issue']
+    #            logr.info( f"Created issue: {child}" )
+    #            jl.link_to_parent( child=child, parent=issue )
+    #            child_issues.append( child )
+    #        else:
+    #            logr.warn( f"Error creating child ticket: '{pprint.pformat( result )}'" )
+    return children
 
 
 def run():

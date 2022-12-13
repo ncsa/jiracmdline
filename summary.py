@@ -5,6 +5,7 @@ import jiralib as jl
 import logging
 import pprint
 import asciitree
+import json
 
 
 # Module level resources
@@ -35,7 +36,8 @@ def get_args():
 
 
 def print_issue_dump( issue ):
-    pprint.pprint( issue.raw )
+    print( json.dumps( issue.raw ) )
+    # pprint.pprint( issue.raw )
 
 
 def print_issue_hierarchy( issue ):
@@ -96,8 +98,10 @@ if __name__ == '__main__':
     if args.debug:
         loglvl = logging.DEBUG
     logr.setLevel( loglvl )
-    logfmt = logging.Formatter( '%(levelname)s:%(funcName)s[%(lineno)d] %(message)s' )
+    fmtstr = '%(levelname)s:%(funcName)s[%(lineno)d] %(message)s'
+    logging.basicConfig( level=loglvl, format=fmtstr )
     ch = logging.StreamHandler()
+    logfmt = logging.Formatter( fmtstr )
     ch.setFormatter( logfmt )
     logr.addHandler( ch )
 
