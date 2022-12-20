@@ -35,6 +35,13 @@ def get_args():
     return resources[key]
 
 
+def get_jira_server_url():
+    key = 'jira_server_url'
+    if key not in resources:
+        resources[key] = jl.get_jira().server_url
+    return resources[key]
+
+
 def print_issue_dump( issue ):
     print( json.dumps( issue.raw ) )
     # pprint.pprint( issue.raw )
@@ -42,16 +49,21 @@ def print_issue_dump( issue ):
 
 def print_issue_hierarchy( issue ):
     tr = asciitree.LeftAligned()
+    # jira_server_url = get_jira_server_url()
     tree = _get_children( issue )
     # pprint.pprint( tree )
     print( tr( tree ) )
 
 
 def _get_children( issue ):
+    ''' Recursively get all "children" of issue.
+        Variable "jira_server_url" is defined once in the module
+        to avoid making repetitive calls to the function to retrive it.
+    '''
     sep = ' '*5
     issue_key = issue.key.ljust(12)
     short_summary = issue.fields.summary[:30].ljust(30)
-    url = f'https://jira.ncsa./browse/{issue.key}'
+    url = f'{jira_server_url}/browse/{issue.key}'
     key = f'{issue_key}{sep}{short_summary}{sep}({url})'
     i_type = jl.get_issue_type( issue )
     if i_type == 'Task':
@@ -104,6 +116,10 @@ if __name__ == '__main__':
     logfmt = logging.Formatter( fmtstr )
     ch.setFormatter( logfmt )
     logr.addHandler( ch )
+
+    # Define this at the module level to avoid repetitive calls
+    # by _get_chilren() recursive function
+    jira_server_url = get_jira_server_url()
 
     # start processing
     run()
