@@ -1,0 +1,24 @@
+services:
+  gunicorn_project:
+    build: ./jiracmdline
+    pull_policy: always
+    environment:
+      - JIRA_PROJECT
+      - JIRA_SERVER
+    volumes:
+      - type: bind
+        source: ${HOME}/.netrc
+        target: /root/.netrc
+      - "static_web_files:/mnt/static_web_files"
+
+  nginx:
+    image: docker.io/andylytical/nginx-as-gunicorn-proxy
+    pull_policy: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - gunicorn_project
+    volumes:
+      - "static_web_files:/mnt/static_web_files"
+volumes:
+  static_web_files:

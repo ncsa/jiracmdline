@@ -9,8 +9,6 @@ import os
 import pprint
 from tabulate import tabulate, SEPARATING_LINE
 
-# tabulate.PRESERVE_WHITESPACE = True
-
 
 # Module level resources
 logr = logging.getLogger( __name__ )
@@ -20,19 +18,41 @@ resources = {}
 class issue:
     ''' Basic parts of a jira issue for display purposes '''
     story: str = ''
-    task: str = ''
+    child: str = ''
     due: str = None
     in_sprint: str = ''
+    summary: str = ''
+    issue_type: str = ''
+    url: str = None
 
-    def __post_init__(self):
-        if self.due is None:
-            # self.due = '*no due date*'
+    def __post_init__( self ):
+        if not self.due:
             self.due = ' NO DUE '.center(12, '-')
 
+    @classmethod
+    def from_src( cls, src ):
+        print(f'got src:{src}')
+        params = {}
+        # if type is not 'story', then assume it's a 'child'
+        # use-case: SECURITY-1553 "is a child of" SVCPLAN-1911, even though type=security-vetting
+        issue_type = jl.get_issue_type(src).lower()
+        if issue_type != 'story':
+            issue_type = 'child'
+        params['issue_type'] = issue_type
+        params[issue_type] = src.key
+        params['due'] = src.fields.duedate
+        params['in_sprint'] = get_active_sprint_name( src )
+        params['summary'] = src.fields.summary[0:50]
+        params['url'] = f'{jl.get_jira().server_url}/browse/{src.key}'
+        return cls( **params )
 
-def get_args():
+
+def get_args( is_cmdline=False ):
     key = 'args'
     if key not in resources:
+        params = ['--output_format=raw'] # not a cmdline invocation
+        if is_cmdline:
+            params = None # parse_args() will process sys.stdin
         constructor_args = {
             'formatter_class': argparse.RawDescriptionHelpFormatter,
             'description': 'Get all relatives of issues in the current Sprint.',
@@ -41,7 +61,7 @@ def get_args():
                 '    NETRC:\n'
                 '        Jira login credentials should be stored in ~/.netrc.\n'
                 '        Machine name should be hostname only.\n'
-                '    JIRA_DEFAULT_PROJECT:\n'
+                '    JIRA_PROJECT:\n'
                 '        Default jira project (if not specified on cmdline).\n'
             )
         }
@@ -52,7 +72,11 @@ def get_args():
             help="Jira project from which to get current Sprint" )
         parser.add_argument( '-s', '--sprint',
             help="Sprint name to use (instead of looking for current sprint)" )
-        resources[key] = parser.parse_args()
+        parser.add_argument( '-o', '--output_format',
+            choices=['text', 'raw' ],
+            default='text',
+            help=argparse.SUPPRESS )
+        resources[key] = parser.parse_args( params )
     return resources[key]
 
 
@@ -64,11 +88,11 @@ def get_project():
             resources[key] = args.project
         else:
             try:
-                resources[key] = os.environ['JIRA_DEFAULT_PROJECT']
+                resources[key] = os.environ['JIRA_PROJECT']
             except KeyError:
                 msg = (
                     'No jira project specified.'
-                    ' Set JIRA_DEFAULT_PROJECT or specify via cmdline option.'
+                    ' Set JIRA_PROJECT or specify via cmdline option.'
                 )
                 logr.exception( msg )
     return resources[key]
@@ -101,13 +125,13 @@ def stories_of_sprint( issues ):
     return set( stories ) # use a set to remove duplicates
 
 
-def get_active_sprint_names( issue ):
+def get_active_sprint_name( issue ):
     sprints = jl.get_sprint_memberships( issue )
-    names = []
+    names = [ None ]
     for s in sprints:
         if s.is_active():
             names.append( f"{s.name}" )
-    return names
+    return names[-1]
 
 
 def run():
@@ -129,25 +153,27 @@ def run():
     logr.debug( 'post process relatives...' )
     data = []
     for story, children in sprint_relatives.items():
-        in_sprint = None
+        data.append( issue.from_src( src=story ) )
         if story in sprint_issues:
-            in_sprint = pprint.pformat( get_active_sprint_names( story ) )
             sprint_issues.remove( story )
-        data.append( issue( story=story.key, due=story.fields.duedate, in_sprint=in_sprint ) )
-        for c in children:
-            in_sprint = None
-            if c in sprint_issues:
-                in_sprint = pprint.pformat( get_active_sprint_names( c ) )
-                sprint_issues.remove( c )
-            data.append( issue( task=c.key, due=c.fields.duedate, in_sprint=in_sprint ) )
+        for child in children:
+            data.append( issue.from_src( src=child ) )
+            if child in sprint_issues:
+                sprint_issues.remove( child )
 
-    # print data table
-    headers= ('Story', 'Task', 'Due', 'Active Sprint')
-    print( tabulate( data, headers ) )
+    headers = ('story', 'child', 'due', 'in_sprint', 'summary')
+    args = get_args()
+    if args.output_format == 'text':
+        print( tabulate( data, headers ) )
+    else:
+        info = {
+            'jira_server': jl.get_jira().server_url,
+        }
+        return { 'info': info, 'headers': headers, 'data': data }
 
 
 if __name__ == '__main__':
-    args = get_args()
+    args = get_args( is_cmdline=True )
 
     # Configure logging
     loglvl = logging.WARNING

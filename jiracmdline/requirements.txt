@@ -1,4 +1,6 @@
+asciitree
+flask
+gunicorn
 jira[cli]
 keyring
-asciitree
 tabulate

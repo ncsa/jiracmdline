@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Sprint Relatives{% endblock title %}
+{% block content %}
+  <h1>Sprint Relatives</h1>
+  <table>
+    <tr>
+      {% for h in headers %}
+      <th>{{ h }}</th>
+      {% endfor %}
+    </tr>
+    {% for issue in data %}
+    <tr class="{{ issue.issue_type }}">
+      <!-- {{issue}} -->
+      {% for h in headers %}
+        {% if h == issue.issue_type %}
+        <td><a href="{{ issue.url }}">{{ issue[ h ] }}</a></td>
+        {% else %}
+        <td>{{ issue[ h ] }}</td>
+        {% endif %}
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
+{% endblock content %}

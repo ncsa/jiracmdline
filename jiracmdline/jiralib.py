@@ -220,15 +220,18 @@ def mk_child_tasks( parent, child_summaries, dryrun=False ):
 
 
 def get_sprint_memberships( issue ):
+    pprint.pprint( issue )
     memberships = issue.fields.customfield_10535
+    pprint.pprint( memberships )
     # try:
     #     memberships = issue.fields.customfield_10535
     # except AttributeError:
     #     i = reload_issue( issue )
     #     memberships = i.fields.customfield_10535
     sprints = []
-    for line in memberships:
-            sprints.append( _str_to_sprint( line ) )
+    if memberships:
+        for line in memberships:
+                sprints.append( _str_to_sprint( line ) )
     return sprints
 
 
