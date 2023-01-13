@@ -6,6 +6,7 @@ ENV APPDIR=/app
 # ENV TZ=America/Chicago
 # RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
+# target directories are created automatically if they don't already exist
 COPY *.py *.txt *.sh ${APPDIR}/
 COPY static/ ${APPDIR}/static/
 COPY templates/ ${APPDIR}/templates/
@@ -15,5 +16,4 @@ RUN pip install --no-cache-dir -r ${APPDIR}/requirements.txt
 RUN ln -s /home/.netrc /root/.netrc
 
 WORKDIR ${APPDIR}
-#ENTRYPOINT [ "gunicorn", "app:app" ]
 ENTRYPOINT [ "./entrypoint.sh" ]

@@ -1,7 +1,18 @@
 # jiracmdline
 Cmdline interface to Jira
 
-# Quick start
+# Web interface
+```
+export JIRA_SERVER=jira.ncsa.illinois.edu
+export JIRA_PROJECT=SVCPLAN
+curl -O https://raw.githubusercontent.com/ncsa/jiracmdline/main/compose.yaml
+docker-compose up
+```
+* Listens on port 80:tcp -> mapped to localhost port 8080:tcp.
+* If you have to tunnel to an internal linux box:
+  * `ssh -L 8080:127.0.0.1:8080 <LINUX.FQDN>`
+
+# Cmdline interface
 1. Start Docker container
 ```
 curl -o go_jira.sh https://raw.githubusercontent.com/ncsa/jiracmdline/main/go.sh
