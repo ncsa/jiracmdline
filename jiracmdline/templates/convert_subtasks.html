@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% macro issue_tr( issue, epic, links ) -%}
+  <tr>
+    <td>{{ issue.key }}</td>            {# key #}
+    <td>{{ issue.fields.summary }}</td> {# summary #}
+    <td>{{ epic }}</td>                 {# epic #}
+    <td>                                {# links #}
+      {% for l in links %}
+        {{ l }}
+        {% if not loop.last %}
+          <br />
+        {% endif %}
+      {% endfor %}
+    </td>
+  </tr>
+{%- endmacro %}
+
+{% block title %}Convert Subtasks{% endblock title %}
+{% block content %}
+  <h1>Convert Subtasks</h1>
+  {% if debug %}
+  <pre>{{ debug }}</pre>
+  {% elif instructions %}
+    <h3>Step 1 - Completed</h3>
+    <p>
+      The sub-tasks (shown in the table below) have been linked as children
+      of their parent.
+    </p>
+    <p>
+      {% for i in instructions %}
+        {% if loop.first %}
+          <h3>{{ i }}</h3>
+          <ol>
+        {% else %}
+          <li>{{ i }}</li>
+        {% endif %}
+      {% endfor %}
+      </ol>
+    </p>
+    <p>
+      <a href="{{ url }}">{{ url }}</a>
+    </p>
+    <p>
+      <table>
+        <tr>
+          <th>Issue</th>
+          <th>Summary</th>
+          <th>Epic</th>
+          <th>Links</th>
+        </tr>
+        {% for i in issues %}
+          {{ issue_tr( i, epics[i.key], links[i.key] ) }}
+        {% endfor %}
+      </table>
+    </p>
+  {% else %}
+    <h3>Enter Ticket ID's</h3>
+    <p>
+      If entering Parent ID's, the tool will lookup the sub-tasks
+      for each parent and operate on those.<br />
+      If entering Subtask ID's, the tool will operate on the specified tickets directly.
+    </p>
+    <p>
+      The subtasks will be linked to their Parent with an "is a child of" relationship
+      <br />
+      and then a manual, second step will convert the Subtasks to Tasks.
+    </p>
+    <form method="post">
+      <p>
+        <table>
+          <tr>
+            <td style="text-align:right">
+              <label for="ticket_ids">Ticket ID's
+                (comma or space separated)
+              </label>
+              <br />
+              <input
+                name="ticket_ids"
+                type="text"
+                size="30"
+                placeholder="svcplan-1 svcplan-2,svcplan-3" />
+            </td>
+            <td>
+              These ticket ID's are:
+              <br />
+              <input type="radio" name="ticket_type" value="parent" checked>
+              <label for="Parent">Parents</label>
+              <br />
+              <input type="radio" name="ticket_type" value="subtask">
+              <label for="subtask">Sub-tasks</label>
+            </td>
+          </tr>
+        </table>
+      </p>
+      <p>
+      <input type="submit">
+      </p>
+    </form>
+  {% endif %}
+{% endblock content %}

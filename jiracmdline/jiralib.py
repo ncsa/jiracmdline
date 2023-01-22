@@ -75,6 +75,9 @@ def reload_issue( issue ):
     return get_issue_by_key( issue.key )
 
 
+def reload_issues( issues ):
+    return [ reload_issue(i) for i in issues ]
+
 def get_issue_type( issue ):
     return issue.fields.issuetype.name
 
@@ -156,7 +159,7 @@ def get_linked_issues( issue ):
 
 def print_issue_summary( issue, parts=None ):
     # force reload of issue
-    i = get_jira().issue( issue.key )
+    i = reload_issue( issue )
     print( f"{i}" )
     print( f"\tSummary: {i.fields.summary}" )
     print( f"\tEpic: {get_epic_name( i )}" )

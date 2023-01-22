@@ -1,3 +1,12 @@
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 10px;
+}
+
 tr.story {
 	background-color: #e0e0e0;
 }
