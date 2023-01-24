@@ -11,7 +11,8 @@ import dataclasses
 logr = logging.getLogger( __name__ )
 resources = {}
 
-# Create a new type for Linked_Issue
+
+# Custom type for Linked_Issue
 Linked_Issue = collections.namedtuple(
     'Linked_Issue',
     ['remote_issue','link_type','direction'] )
@@ -58,6 +59,10 @@ def get_jira():
     return resources[key]
 
 
+def run_jql( jql ):
+    return get_jira().search_issues( jql, maxResults=9999 )
+
+
 def get_issue_by_key( key ):
     ''' key: String
     '''
@@ -68,7 +73,7 @@ def get_issues_by_keys( keys ):
     ''' keys: List of Strings
     '''
     csv = ",".join( keys )
-    return get_jira().search_issues( f'key in ({csv})', maxResults=9999 )
+    return run_jql( f'key in ({csv})' )
 
 
 def reload_issue( issue ):
@@ -77,6 +82,7 @@ def reload_issue( issue ):
 
 def reload_issues( issues ):
     return [ reload_issue(i) for i in issues ]
+
 
 def get_issue_type( issue ):
     return issue.fields.issuetype.name
@@ -106,7 +112,7 @@ def get_parent( issue ):
 
 def get_linked_parent( issue ):
     jql = f'issue in linkedIssues( {issue.key}, "is a child of" )'
-    issues = get_jira().search_issues( jql, maxResults=9999 )
+    issues = run_jql( jql )
     qty = len( issues )
     if qty > 1:
         raise UserWarning( f"Found more than one parent for '{issue.key}'" )
@@ -119,7 +125,7 @@ def get_linked_parent( issue ):
 
 def get_linked_children( parent ):
     jql = f'issue in linkedIssues( {parent.key}, "is the parent of" )'
-    return get_jira().search_issues( jql, maxResults=9999 )
+    return run_jql( jql )
 
 
 def get_project_key( issue ):
@@ -130,7 +136,7 @@ def get_issues_in_epic( issue, include_completed_issues=False ):
     jql = f'"Epic Link" = {issue.key}'
     if include_completed_issues:
         jql = f'{jql} and resolved is empty'
-    return get_jira().search_issues( jql, maxResults=9999 )
+    return run_jql( jql )
 
 
 def get_stories_in_epic( issue ):
@@ -157,6 +163,14 @@ def get_linked_issues( issue ):
     return linked_issues
 
 
+def get_active_sprint_name( issue ):
+    sprints = get_sprint_memberships( issue )
+    names = [ '' ]
+    for s in sprints:
+        if s.is_active():
+            names.append( f"{s.name}" )
+    return names[-1]
+
 def print_issue_summary( issue, parts=None ):
     # force reload of issue
     i = reload_issue( issue )
@@ -177,12 +191,11 @@ def link_to_parent( child, parent, dryrun=False ):
     logr.info( f'Create link: Parent={parent} -> Child={child}' )
     if dryrun:
         return #stop here on dryrun
-    j = get_jira()
-    j.create_issue_link(
+    get_jira().create_issue_link(
         type='Ancestor',
         inwardIssue=parent.key,
         outwardIssue=child.key
-        )
+    )
 
 
 def add_tasks_to_epic( issue_list, epic_key ):

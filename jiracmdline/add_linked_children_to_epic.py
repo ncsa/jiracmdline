@@ -16,7 +16,7 @@ def get_args():
     if key not in resources:
         constructor_args = {
             'formatter_class': argparse.RawDescriptionHelpFormatter,
-            'description': 'Create "child of" link from sub-tasks of parent',
+            'description': 'Add child issues to the same epic as their parent.',
             'epilog': '''
 NETRC:
     Jira login credentials should be stored in ~/.netrc.
@@ -30,7 +30,7 @@ NETRC:
             help='Show what would be done but make no changes.' )
         g1 = parser.add_mutually_exclusive_group()
         g1.add_argument( '-P', '--parents', action='store_true',
-            help='Specified issues are parents. Find and Operate on their subtasks.' )
+            help='Specified issues are parents. Find and Operate on their children.' )
         g1.add_argument( '-p', '--project', 
             help="Find all matching issues in PROJECT. Add to their parent's epic." )
         parser.add_argument( 'issues', nargs='*' )

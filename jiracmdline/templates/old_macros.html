@@ -1,0 +1,15 @@
+{% macro issue_tr( issue, epic, links ) -%}
+  <tr>
+    <td>{{ issue.key }}</td>            {# key #}
+    <td>{{ issue.fields.summary }}</td> {# summary #}
+    <td>{{ epic }}</td>                 {# epic #}
+    <td>                                {# links #}
+      {% for l in links %}
+        {{ l }}
+        {% if not loop.last %}
+          <br />
+        {% endif %}
+      {% endfor %}
+    </td>
+  </tr>
+{%- endmacro %}

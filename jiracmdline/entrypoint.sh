@@ -1,17 +1,19 @@
 #!/bin/bash
-set -eu
+#set -eu
 
 assert_var_is_set() {
   echo "assert_var_is_set: got '$1'"
   if [[ -z "${!1}" ]] ; then
-    echo "FATAL: Env var '${1}' cannot be empty"
+    echo "FATAL ERROR: Env var '${1}' cannot be empty"
     exit 1
   else
     echo "Env Var '${1}' = '${!1}'"
   fi
 }
 
-# # Check for required environment variables
+# echo $BASH_VERSION
+
+# Check for required environment variables
 assert_var_is_set JIRA_SERVER
 assert_var_is_set JIRA_PROJECT
 

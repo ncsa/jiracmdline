@@ -5,9 +5,12 @@ run:
 build:
 	docker-compose -f build.yaml up --build
 
-gunicorn:
-	docker-compose -f build.yaml build
-	docker-compose -f build.yaml run  gunicorn_project bash
+# cmdline:
+# 	docker-compose run gunicorn_project bash
+
+# cmdline-build:
+# 	docker-compose -f build.yaml build
+# 	docker-compose -f build.yaml run gunicorn_project bash
 
 clean:
 	docker-compose down

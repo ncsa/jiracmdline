@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% import 'macros.html' as m %}
-{% block title %}Sprint Relatives{% endblock title %}
+{% block title %}Lost Children{% endblock title %}
 {% block content %}
-  <h1>Sprint Relatives</h1>
+  <h1>Lost Children</h1>
   <table>
     <tr>
       {% for h in headers %}
@@ -10,6 +10,7 @@
       {% endfor %}
     </tr>
     {% for issue in issues %}
+      <!-- {{issue}} -->
       {{ m.issue_tr( headers, issue ) }}
     {% endfor %}
   </table>

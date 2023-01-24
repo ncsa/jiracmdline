@@ -1,0 +1,21 @@
+{% macro issue_tr( headers, issue ) -%}
+<tr class="{{ issue.issue_type }}">
+    {% for h in headers %}
+      {% if h in ["key", "story", "child" ] %}
+        <td><a href="{{ issue.url }}">{{ issue[ h ] }}</a></td>
+      {% elif h == "links" %}
+        <td>
+          {% for l in issue[h] %}
+            {{ l }}
+            {% if loop.last %}
+            {% else %}
+              <br />
+            {% endif %}
+          {% endfor %}
+        </td>
+      {% else %}
+        <td>{{ issue[h] }}</td>
+      {% endif %}
+    {% endfor %}
+  </tr>
+{%- endmacro %}

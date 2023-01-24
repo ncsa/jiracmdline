@@ -12,6 +12,11 @@ logr = logging.getLogger( __name__ )
 resources = {}
 
 
+def reset():
+    global resources
+    resources = {}
+
+
 def get_args( is_cmdline=False, custom_params=[] ):
     key = 'args'
     if key not in resources:
@@ -96,6 +101,7 @@ def sanitize_val( val ):
 
 
 def run( **kwargs ):
+    reset()
     parts = []
     for k,v in kwargs.items():
         key = sanitize_key( k )
@@ -116,7 +122,9 @@ def run( **kwargs ):
     logr.debug( f"ISSUES: '{issues}'" )
     for i in issues:
         p = jl.get_parent( i )
-        jl.link_to_parent( child=i, parent=p, dryrun=args.dryrun )
+        if p:
+            jl.link_to_parent( child=i, parent=p, dryrun=args.dryrun )
+        # if p = None, then issue is not a sub-task
 
     # show results and instructions
     jql_url = jql2url( jql )

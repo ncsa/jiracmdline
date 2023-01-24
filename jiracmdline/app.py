@@ -20,9 +20,20 @@ def do_sprint_relatives():
     return flask.render_template(
         'sprint_relatives.html',
         headers=data['headers'],
-        data=data['data'],
-        info=data['info'],
+        issues=data['issues'],
     )
+
+
+@app.route( '/lost-children' )
+def do_lost_children():
+    import lost_children
+    headers, issues = lost_children.run()
+    return flask.render_template(
+        'lost_children.html',
+        headers=headers,
+        issues=issues,
+    )
+
 
 @app.route( '/convert-subtasks', methods=['POST','GET'] )
 def do_convert_subtasks():
