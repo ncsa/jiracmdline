@@ -7,12 +7,14 @@
     {% endblock head %}
 </head>
 <body>
-  <div id="navbar">{% block navbar %}{% include 'navbar.html' %}{% endblock navbar %}</div>
-    <div id="content">{% block content %}{% endblock content %}</div>
-    <div id="footer">
-        {% block footer %}
-        <hr />
-        {% endblock footer %}
-    </div>
+  {% include 'topnav.html' %}
+  {% include 'messages.html' %}
+  {% include 'errors.html' %}
+  <div id="content">{% block content %}{% endblock content %}</div>
+  <div id="footer">
+      {% block footer %}
+      <hr />
+      {% endblock footer %}
+  </div>
 </body>
 </html>

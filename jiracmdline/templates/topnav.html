@@ -1,0 +1,13 @@
+<div class="topnav">
+	<form method="get">
+  <label for="project">Jira Project:</label>
+  <input type="text" id="project" name="project" size=10 value="{{ session['jira_project'] }}" />
+  <button type="submit" formaction="/sprint-relatives">Sprint Relatives</button>
+  <button type="submit" formaction="/lost-children">Lost Children</button>
+  </form>
+
+	<form method="get">
+  <button type="submit" formaction="/tasks_from_description">Tasks from Description</button>
+	<button type="submit" formaction="/convert-subtasks">Convert Subtasks</button>
+  </form>
+</div>

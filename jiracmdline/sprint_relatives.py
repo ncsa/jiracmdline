@@ -1,51 +1,21 @@
 #!/usr/local/bin/python3
 
 import argparse
+import cmdlinelib as cl
 import dataclasses
 import datetime
 import jiralib as jl
 import logging
 import os
 import pprint
+import weblib as wl
 from simple_issue import simple_issue
-from tabulate import tabulate, SEPARATING_LINE
+from tabulate import tabulate
 
 
 # Module level resources
 logr = logging.getLogger( __name__ )
 resources = {}
-
-# @dataclasses.dataclass
-# class issue:
-#     ''' Basic parts of a jira issue for display purposes '''
-#     story: str = ''
-#     child: str = ''
-#     due: str = None
-#     in_sprint: str = ''
-#     summary: str = ''
-#     issue_type: str = ''
-#     url: str = None
-
-#     def __post_init__( self ):
-#         if not self.due:
-#             self.due = ' NO DUE '.center(12, '-')
-
-#     @classmethod
-#     def from_src( cls, src ):
-#         print(f'got src:{src}')
-#         params = {}
-#         # if type is not 'story', then assume it's a 'child'
-#         # use-case: SECURITY-1553 "is a child of" SVCPLAN-1911, even though type=security-vetting
-#         issue_type = jl.get_issue_type(src).lower()
-#         if issue_type != 'story':
-#             issue_type = 'child'
-#         params['issue_type'] = issue_type
-#         params[issue_type] = src.key
-#         params['due'] = src.fields.duedate
-#         params['in_sprint'] = get_active_sprint_name( src )
-#         params['summary'] = src.fields.summary[0:50]
-#         params['url'] = f'{jl.get_jira().server_url}/browse/{src.key}'
-#         return cls( **params )
 
 
 def reset():
@@ -53,12 +23,10 @@ def reset():
     resources = {}
 
 
-def get_args( is_cmdline=False ):
+def get_args( params=None ):
+    global resources
     key = 'args'
     if key not in resources:
-        params = ['--output_format=raw'] # not a cmdline invocation
-        if is_cmdline:
-            params = None # parse_args() will process sys.stdin
         constructor_args = {
             'formatter_class': argparse.RawDescriptionHelpFormatter,
             'description': 'Get all relatives of issues in the current Sprint.',
@@ -98,9 +66,10 @@ def get_project():
             except KeyError:
                 msg = (
                     'No jira project specified.'
-                    ' Set JIRA_PROJECT or specify via cmdline option.'
+                    ' Set JIRA_PROJECT env var or specify via cmdline option.'
                 )
-                logr.exception( msg )
+                # logr.exception( msg )
+                raise UserWarning( msg )
     return resources[key]
 
 
@@ -140,8 +109,14 @@ def get_active_sprint_name( issue ):
     return names[-1]
 
 
-def run():
-    reset()
+def run( **kwargs ):
+    parts = wl.process_kwargs( kwargs )
+    if parts:
+        reset()
+        parts.append( '--output_format=raw' )
+    print( f"KWARGS: '{parts}" )
+    args = get_args( params=parts )
+    print( f"ARGS: '{args}" )
 
     logr.debug( 'get sprint issues...' )
     sprint_issues = get_issues_in_sprint()
@@ -170,16 +145,14 @@ def run():
                 sprint_issues.remove( child )
 
     headers = ('story', 'child', 'due', 'in_sprint', 'summary')
-    args = get_args()
     if args.output_format == 'text':
-        # print( tabulate( issues, headers ) )
-        print( 'Untested' )
+        cl.text_table( headers, issues )
     else:
         return { 'headers': headers, 'issues': issues }
 
 
 if __name__ == '__main__':
-    args = get_args( is_cmdline=True )
+    args = get_args()
 
     # Configure logging
     loglvl = logging.WARNING

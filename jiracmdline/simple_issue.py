@@ -52,4 +52,4 @@ class simple_issue:
         return cls( **params )
 
 if __name__ == '__main__':
-    raise UserWarning( 'Not a cmdline function' )
+    raise UserWarning( 'Invocation error; not a standalone script.' )

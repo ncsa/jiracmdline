@@ -10,3 +10,67 @@ th, td {
 tr.story {
 	background-color: #e0e0e0;
 }
+
+
+/* TOPNAV */
+.topnav {
+  overflow: hidden;
+  background-color: #ccc;
+}
+
+.topnav button, input, label {
+  margin: 4px 0px;
+}
+
+.topnav input {
+  background-color: #fafad2;
+}
+
+.topnav button:hover {
+  /* background-color: #FF552E; */
+  background-color: #f5821e;
+  border-color: #1d58a7;
+  color: white;
+}
+
+/* .topnav button.active { */
+/*   background-color: #1E3877; */
+/*   color: white; */
+/* } */
+
+
+/* MESSAGES */
+.message-container {
+  background-color: #ffe6bf;
+  border: 1px solid #ffc266;
+  /* float: left; */
+  padding: 20px 30px;
+}
+
+.message-text {
+  color: #cc6600;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 20px;
+  text-shadow: 1px 1px rgba(250,250,250,.3);
+}
+
+
+/* ERRORS */
+/* https://sarahholleydesign.com/pure-css-custom-error-messaging-for-default-form-elements/ */
+.error-container {
+  background-color: #fce4e4;
+  border: 1px solid #fcc2c3;
+  /* float: left; */
+  padding: 20px 30px;
+}
+
+.error-text {
+  color: #cc0033;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 20px;
+  text-shadow: 1px 1px rgba(250,250,250,.3);
+}

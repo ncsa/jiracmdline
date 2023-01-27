@@ -1,0 +1,9 @@
+{% if messages %}
+  {% for m in messages %}
+  <p>
+    <div class="message-container" >
+      <span class="message-text">{{ m }}</span>
+    </div>
+  </p>
+  {% endfor %}
+{% endif %}

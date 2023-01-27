@@ -1,11 +1,11 @@
-import csv
-import os
 import collections
+import csv
+import dataclasses
 import jira
 import logging
-import pprint
 import netrc
-import dataclasses
+import os
+import pprint
 
 # Module level resources
 logr = logging.getLogger( __name__ )
@@ -45,7 +45,10 @@ sprint_field_names = sprint_fields.keys()
 def get_jira():
     key = 'jira_connection'
     if key not in resources:
-        jira_server = os.getenv( 'JIRA_SERVER' )
+        try:
+            jira_server = os.environ[ 'JIRA_SERVER' ]
+        except KeyError as e:
+            raise UserWarning( 'Jira Server missing. Set JIRA_SERVER environment variable' )
         # attempt to get user,pass from netrc file
         nrc = netrc.netrc()
         login, account, pwd = nrc.authenticators( jira_server )
@@ -222,7 +225,7 @@ def mk_child_tasks( parent, child_summaries, dryrun=False ):
         issue_list.append( defaults | custom_parts )
     logr.debug( f'About to create {pprint.pformat( issue_list )}' )
     child_issues = []
-    if not dryrun:
+    if not dryrun and issue_list:
         new_tasks = get_jira().create_issues( field_list=issue_list )
         for result in new_tasks:
             if result['status'] == 'Success':

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% import 'macros.html' as m %}
+{% block title %}Tasks From Description{% endblock title %}
+{% block content %}
+  <p></p>
+  <h1>Tasks From Description</h1>
+  {% if issues %}
+  <table>
+    <tr>
+      {% for h in headers %}
+        <th>{{ h|capitalize() }}</th>
+      {% endfor %}
+    </tr>
+    {% for issue in issues %}
+      {{ m.issue_tr( headers, issue ) }}
+    {% endfor %}
+  </table>
+  {% else %}
+    <h3>Enter Ticket ID's</h3>
+    <p class="instructions">
+      Create child tasks from (^TASK) lines in the description.
+      <br />
+      For each issue, find lines in the description that 
+      begin with the string "TASK ".
+      <br />
+      For each matching line, create a new "child" task.
+    </p>
+    <p class="ticket_form">
+      <form method="post">
+        <label for="ticket_ids">Ticket ID's
+          (comma or space separated)
+        </label>
+        <input
+          name="ticket_ids"
+          type="text"
+          size="30"
+          placeholder="svcplan-1 svcplan-2,svcplan-3" />
+        <input type="submit">
+        <input type="hidden" name="output_format" value="raw" />
+      </form>
+    </p>
+  {% endif %}
+{% endblock content %}

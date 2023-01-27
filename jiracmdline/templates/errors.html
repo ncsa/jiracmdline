@@ -1,0 +1,9 @@
+{% if errors %}
+  {% for e in errors %}
+  <p>
+    <div class="error-container" >
+      <span class="error-text">{{ e }}</span>
+    </div>
+  </p>
+  {% endfor %}
+{% endif %}
