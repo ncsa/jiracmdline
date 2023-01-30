@@ -52,10 +52,8 @@ bash ./go_jira.sh
 ```
 
 ### Create linked children from description (also add to parent's epic)
-Will read bulleted list, numbered list, or plain lines
-(each line becomes a single child Task)
 ```
-./mk_children_from_description.py SVCPLAN-2511
+./tasks_from_description.py SVCPLAN-2511
 ```
 
 # Dev Setup

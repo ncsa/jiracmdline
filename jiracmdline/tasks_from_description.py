@@ -1,10 +1,8 @@
 #!/usr/local/bin/python3
 
 import argparse
-import collections
 import jira.exceptions
 import logging
-import pprint
 import re
 
 import cmdlinelib as cl
@@ -99,7 +97,6 @@ def mk_children_from_description( issue ):
     children = []
     args = get_args()
     summaries = get_child_summaries( issue )
-    # pprint.pprint(summaries)
     if summaries:
         children = jl.mk_child_tasks(
             parent=issue,

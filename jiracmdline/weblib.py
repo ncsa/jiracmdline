@@ -7,7 +7,7 @@ def sanitize_key( key ):
 
 def sanitize_val( val ):
     temp = re.sub( ',', ' ', val )
-    return re.sub( '[^ a-zA-Z0-9_-]', '', temp )
+    return re.sub( '[^\r\n a-zA-Z0-9_-]', '', temp )
 
 
 def process_kwargs( kwargs ):

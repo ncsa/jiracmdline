@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% import 'macros.html' as m %}
+{% block title %}Add Children{% endblock title %}
+{% block content %}
+  <p></p>
+  <h1>Add Children</h1>
+  {% if issues %}
+  <table>
+    <tr>
+      {% for h in headers %}
+        <th>{{ h|capitalize() }}</th>
+      {% endfor %}
+    </tr>
+    {% for issue in issues %}
+      {{ m.issue_tr( headers, issue ) }}
+    {% endfor %}
+  </table>
+  {% else %}
+    <h3>Parent Ticket ID & Child Summaries</h3>
+    <p class="instructions">
+      Each line in the text area below will become the summary of a new task
+      that will be created as a child of the specified parent ticket.
+      <br />
+    </p>
+    <p class="ticket_form">
+      <form method="post">
+        <label for="parent">Parent ticket</label>
+        <input name="parent" type="text" />
+        <br />
+        <br />
+        <label for="new_child_text">New child task summaries (one per line)</label>
+        <br />
+        <textarea name="new_child_text" rows="10" cols="90%" required wrap="hard"/></textarea>
+        <input type="submit">
+        <input type="hidden" name="output_format" value="raw" />
+      </form>
+    </p>
+  {% endif %}
+{% endblock content %}

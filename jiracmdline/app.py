@@ -22,7 +22,7 @@ def do_index():
     )
 
 
-@app.route( '/sprint-relatives', methods=['POST','GET'] )
+@app.route( '/sprint_relatives', methods=['POST','GET'] )
 def do_sprint_relatives():
     import sprint_relatives
     session_init( flask.session )
@@ -36,7 +36,7 @@ def do_sprint_relatives():
     )
 
 
-@app.route( '/lost-children', methods=['POST', 'GET'] )
+@app.route( '/lost_children', methods=['POST', 'GET'] )
 def do_lost_children():
     import lost_children
     session_init( flask.session )
@@ -63,7 +63,23 @@ def do_tasks_from_description():
     )
 
 
-@app.route( '/convert-subtasks', methods=['POST','GET'] )
+@app.route( '/add_children', methods=['POST', 'GET'] )
+def do_add_children():
+    import add_children
+    session_init( flask.session )
+    data = {}
+    if flask.request.method == 'POST':
+        try:
+            data = add_children.run( **flask.request.form )
+        except UserWarning as e:
+            data['errors'] = str( e )
+    return flask.render_template(
+        'add_children.html',
+        **data,
+    )
+
+
+@app.route( '/convert_subtasks', methods=['POST','GET'] )
 def do_convert_subtasks():
     session_init( flask.session )
     debug = None
