@@ -21,7 +21,7 @@ assert_var_is_set JIRA_PROJECT
 static_dir='/mnt/static_web_files/'
 if [[ -d "$static_dir" ]] ; then
   # static web files will be served by the web server (reverse proxy)
-  cp -udR static/* "$static_dir"
+  cp -udR -t "$static_dir" static/
 
   # start gunicorn service
   exec gunicorn 'app:app'
