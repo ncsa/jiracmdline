@@ -1,12 +1,9 @@
 #!/usr/local/bin/python3
 
 import argparse
+import libjira
+import libweb
 import logging
-
-import jiralib as jl
-import cmdlinelib as cl
-import weblib as wl
-
 from simple_issue import simple_issue
 
 # Module level resources
@@ -17,6 +14,7 @@ resources = {}
 def reset():
     global resources
     resources = {}
+
 
 def get_args( params=None ):
     key = 'args'
@@ -35,15 +33,23 @@ def get_args( params=None ):
             help='Show what would be done but make no changes.' )
         parser.add_argument( '--parent', 
             help='Ticket-id of parent, to which children tasks will be added.' )
+        parser.add_argument( 'text', nargs='*',
+            help='Text to process for new task summaries, one per line.' )
+        # text from the web
         parser.add_argument( '--new_child_text', help=argparse.SUPPRESS )
+        # output format = raw for web use
         parser.add_argument( '--output_format',
             choices=['text', 'raw' ],
             default='text',
             help=argparse.SUPPRESS )
-        parser.add_argument( 'text', nargs='*',
-            help='Text to process for new task summaries, one per line.' )
+        # jira session id (from web form)
+        parser.add_argument( '--jira_session_id', help=argparse.SUPPRESS )
         resources[key] = parser.parse_args( params )
     return resources[key]
+
+
+def get_jira():
+    return libjira.get_jira( get_args().jira_session_id )
 
 
 def get_errors():
@@ -76,21 +82,23 @@ def mk_summaries( text ):
     return filtered_lines
 
 
-def mk_children_from_description( issue ):
-    args = get_args()
-    j = jl.get_jira()
-    summaries = split_issue_description( issue )
-    children = jl.mk_child_tasks( parent=issue, child_summaries=summaries )
-    return children
+# def mk_children_from_description( issue ):
+#     args = get_args()
+#     j = libjira.get_jira()
+#     summaries = split_issue_description( issue )
+#     children = libjira.mk_child_tasks( parent=issue, child_summaries=summaries )
+#     return children
 
 
 def run( **kwargs ):
-    parts = wl.process_kwargs( kwargs )
+    parts = libweb.process_kwargs( kwargs )
     if parts:
         reset()
     print( f"KWARGS: '{parts}'" )
     args = get_args( params=parts )
     print( f"ARGS: '{args}'" )
+
+    jc = get_jira() #jira_connection
 
     # process text into child task summaries
     summaries = mk_summaries( args.new_child_text )
@@ -98,26 +106,26 @@ def run( **kwargs ):
         raise UserWarning( 'unable to make summaries from text' )
     
     # get parent from jira
-    parent = jl.get_issue_by_key( args.parent )
+    parent = jc.get_issue_by_key( args.parent )
     if not parent:
         raise UserWarning( f"No such ticket '{args.parent}'" )
 
     # get parent epic
-    epic = jl.get_epic_name( parent )
+    epic = jc.get_epic_name( parent )
     if not epic:
         raise UserWarning( f"Parent '{parent.key}' has no Epic" )
 
-    children = jl.mk_child_tasks( parent=parent, child_summaries=summaries )
-    jl.add_tasks_to_epic( children, epic )
-    parent = jl.reload_issue( parent )
+    children = jc.mk_child_tasks( parent=parent, child_summaries=summaries )
+    jc.add_tasks_to_epic( children, epic )
+    parent = jc.reload_issue( parent )
 
     if args.output_format == 'text':
-        jl.print_issue_summary( parent )
+        jc.print_issue_summary( parent )
     else:
         headers = ( 'story', 'child', 'summary', 'epic', 'links' )
         raw_issues = [ parent ]
-        raw_issues.extend( jl.reload_issues( children ) )
-        issues = [ simple_issue.from_src( i ) for i in raw_issues ]
+        raw_issues.extend( jc.reload_issues( children ) )
+        issues = [ simple_issue.from_src( src=i, jcon=jc ) for i in raw_issues ]
         return {
             'headers': headers,
             'issues': issues,

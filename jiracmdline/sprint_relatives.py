@@ -1,16 +1,12 @@
 #!/usr/local/bin/python3
 
 import argparse
-import cmdlinelib as cl
-import dataclasses
-import datetime
-import jiralib as jl
+import libcmdline
+import libjira
 import logging
 import os
-import pprint
-import weblib as wl
+import libweb
 from simple_issue import simple_issue
-from tabulate import tabulate
 
 
 # Module level resources
@@ -46,12 +42,19 @@ def get_args( params=None ):
             help="Jira project from which to get current Sprint" )
         parser.add_argument( '-s', '--sprint',
             help="Sprint name to use (instead of looking for current sprint)" )
+        # raw output requested by web form
         parser.add_argument( '-o', '--output_format',
             choices=['text', 'raw' ],
             default='text',
             help=argparse.SUPPRESS )
+        # jira session id (from web form)
+        parser.add_argument( '--jira_session_id', help=argparse.SUPPRESS )
         resources[key] = parser.parse_args( params )
     return resources[key]
+
+
+def get_jira():
+    return libjira.get_jira( get_args().jira_session_id )
 
 
 def get_project():
@@ -77,8 +80,8 @@ def get_issues_in_sprint( sprint_name=None ):
     jql = f'sprint in openSprints() and project = {get_project()}'
     if sprint_name:
         raise UserWarning( 'TODO' )
-    j = jl.get_jira()
-    return j.search_issues( jql, maxResults=9999 )
+    return get_jira().run_jql( jql )
+
 
 
 def stories_of_sprint( issues ):
@@ -88,7 +91,7 @@ def stories_of_sprint( issues ):
         if i_type == "Story":
             stories.append(i)
         elif i_type == "Task":
-            parent = jl.get_linked_parent(i) # returns None if not linked
+            parent = get_jira().get_linked_parent(i) # returns None if not linked
             if parent:
                 stories.append(parent)
         else:
@@ -100,17 +103,8 @@ def stories_of_sprint( issues ):
     return set( stories ) # use a set to remove duplicates
 
 
-def get_active_sprint_name( issue ):
-    sprints = jl.get_sprint_memberships( issue )
-    names = [ None ]
-    for s in sprints:
-        if s.is_active():
-            names.append( f"{s.name}" )
-    return names[-1]
-
-
 def run( **kwargs ):
-    parts = wl.process_kwargs( kwargs )
+    parts = libweb.process_kwargs( kwargs )
     if parts:
         reset()
         parts.append( '--output_format=raw' )
@@ -129,24 +123,24 @@ def run( **kwargs ):
     logr.debug( 'get sprint relatives...' )
     sprint_relatives = {}
     for s in stories:
-        children = jl.get_linked_children( s )
+        children = get_jira().get_linked_children( s )
         sprint_relatives[ s ] = children
 
     # post process relatives
     logr.debug( 'post process relatives...' )
     issues = []
     for story, children in sprint_relatives.items():
-        issues.append( simple_issue.from_src( src=story ) )
+        issues.append( simple_issue.from_src( src=story, jcon=get_jira() ) )
         if story in sprint_issues:
             sprint_issues.remove( story )
         for child in children:
-            issues.append( simple_issue.from_src( src=child ) )
+            issues.append( simple_issue.from_src( src=child, jcon=get_jira() ) )
             if child in sprint_issues:
                 sprint_issues.remove( child )
 
     headers = ('story', 'child', 'due', 'in_sprint', 'summary')
     if args.output_format == 'text':
-        cl.text_table( headers, issues )
+        libcmdline.text_table( headers, issues )
     else:
         return { 'headers': headers, 'issues': issues }
 

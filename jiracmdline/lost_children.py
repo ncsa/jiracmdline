@@ -1,11 +1,11 @@
 #!/usr/local/bin/python3
 
 import argparse
-import cmdlinelib as cl
-import jiralib as jl
+import libcmdline
+import libjira
+import libweb
 import logging
 import os
-import weblib as wl
 from simple_issue import simple_issue
 
 
@@ -39,12 +39,19 @@ def get_args( params=None ):
         parser.add_argument( '-v', '--verbose', action='store_true' )
         parser.add_argument( '-p', '--project',
             help="Jira project from which to search for issues." )
+        # raw output requested by web form
         parser.add_argument( '--output_format',
             choices=['text', 'raw' ],
             default='text',
             help=argparse.SUPPRESS )
+        # jira session id (from web form)
+        parser.add_argument( '--jira_session_id', help=argparse.SUPPRESS )
         resources[key] = parser.parse_args( params )
     return resources[key]
+
+
+def get_jira():
+    return libjira.get_jira( get_args().jira_session_id )
 
 
 def get_project():
@@ -61,12 +68,13 @@ def get_project():
                     'No jira project specified.'
                     ' Set JIRA_PROJECT or specify via cmdline option.'
                 )
-                logr.exception( msg )
+                # logr.exception( msg )
+                raise UserWarning( msg )
     return resources[key]
 
 
 def run( **kwargs ):
-    parts = wl.process_kwargs( kwargs )
+    parts = libweb.process_kwargs( kwargs )
     if parts:
         reset()
         parts.append( '--output_format=raw' )
@@ -76,21 +84,21 @@ def run( **kwargs ):
 
     logr.debug( "Get all the tasks that don't have an epic link" )
     jql = f'project = {get_project()} and type = Task and "Epic Link" is EMPTY'
-    tasks = jl.run_jql( jql )
+    tasks = get_jira().run_jql( jql )
 
     logr.debug( "filter out tasks that don't have a \"linked parent\"" )
     # this is necessary since we need the parent's Epic to assign it to the child
     issues = []
     for task in tasks:
-        p = jl.get_linked_parent( task )
+        p = get_jira().get_linked_parent( task )
         if p:
             # attempt to find parent's Epic
-            epic = jl.get_epic_name( task )
+            epic = get_jira().get_epic_name( task )
             if epic:
                 reason = f'Parent Epic: {epic}'
             else:
                 reason = f'Parent has no epic'
-            si = simple_issue.from_src( task )
+            si = simple_issue.from_src( src=task, jcon=get_jira() )
             si.notes = reason
             issues.append( si )
 
@@ -98,7 +106,7 @@ def run( **kwargs ):
     args = get_args()
     headers = ( 'key', 'summary', 'epic', 'links', 'notes' )
     if args.output_format == 'text':
-        cl.text_table( headers, issues )
+        libcmdline.text_table( headers, issues )
     else:
         return { 'headers': headers, 'issues': issues }
 

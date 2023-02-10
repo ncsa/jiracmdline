@@ -1,5 +1,6 @@
 asciitree
 flask
+flask-login
 gunicorn
 jira[cli]
 keyring

@@ -10,6 +10,10 @@ def sanitize_val( val ):
     return re.sub( '[^\r\n a-zA-Z0-9_-]', '', temp )
 
 
+def sanitize_dict( dirty ):
+    return { sanitize_key(k): sanitize_val(v) for k,v in dirty.items() }
+
+
 def process_kwargs( kwargs ):
     parts = []
     for k,v in kwargs.items():

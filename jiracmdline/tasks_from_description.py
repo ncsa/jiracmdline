@@ -2,13 +2,10 @@
 
 import argparse
 import jira.exceptions
+import libjira
+import libweb
 import logging
 import re
-
-import cmdlinelib as cl
-import jiralib as jl
-import weblib as wl
-
 from simple_issue import simple_issue
 
 # Module level resources
@@ -50,11 +47,17 @@ def get_args( params=None ):
             choices=['text', 'raw' ],
             default='text',
             help=argparse.SUPPRESS )
+        # jira session id (from web form)
+        parser.add_argument( '--jira_session_id', help=argparse.SUPPRESS )
         args = parser.parse_args( params )
         if args.ticket_ids:
             args.issues.extend( args.ticket_ids.split() )
         resources[key] = args
     return resources[key]
+
+
+def get_jira():
+    return libjira.get_jira( get_args().jira_session_id )
 
 
 def get_errors():
@@ -98,7 +101,7 @@ def mk_children_from_description( issue ):
     args = get_args()
     summaries = get_child_summaries( issue )
     if summaries:
-        children = jl.mk_child_tasks(
+        children = get_jira().mk_child_tasks(
             parent=issue,
             child_summaries=summaries,
             dryrun=args.dryrun
@@ -109,19 +112,21 @@ def mk_children_from_description( issue ):
 
 
 def run( **kwargs ):
-    parts = wl.process_kwargs( kwargs )
+    parts = libweb.process_kwargs( kwargs )
     if parts:
         reset()
+        parts.append( '--output_format=raw' )
     print( f"KWARGS: '{parts}'" )
     args = get_args( params=parts )
     print( f"ARGS: '{args}'" )
 
+    jc = get_jira() #jira_connection
+
     # load specified issues from jira
-    # parents = jl.get_issues_by_keys( args.issues )
     parents = []
     children = []
     try:
-        parents = jl.get_issues_by_keys( args.issues )
+        parents = jc.get_issues_by_keys( args.issues )
     except jira.exceptions.JIRAError as e:
         error( e.text )
     raw_issues = []
@@ -136,16 +141,16 @@ def run( **kwargs ):
             raw_issues.append( p )
             # assign parent's epic to each child
             # TODO - catch jira error
-            epic_key = jl.get_epic_name( p )
+            epic_key = jc.get_epic_name( p )
             if not args.dryrun:
-                jl.add_tasks_to_epic( children, epic_key )
-            raw_issues.extend( jl.reload_issues( children ) )
+                jc.add_tasks_to_epic( children, epic_key )
+            raw_issues.extend( jc.reload_issues( children ) )
     if args.output_format == 'text':
         for i in raw_issues:
-            jl.print_issue_summary( i )
+            jc.print_issue_summary( i )
     else:
         headers = ( 'story', 'child', 'summary', 'epic', 'links' )
-        issues = [ simple_issue.from_src(i) for i in raw_issues ]
+        issues = [ simple_issue.from_src( src=i, jcon=jc ) for i in raw_issues ]
         return {
             'headers': headers,
             'issues': issues,

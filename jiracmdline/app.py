@@ -1,20 +1,57 @@
-import flask
 import datetime
-import secrets
+import flask
+import flask_login
+import libjira
+import libweb
 import os
+import secrets
+import user
 
 app = flask.Flask( __name__ )
 app.secret_key = secrets.token_hex()
+# Tell flask_login to put "next" in the session instead of GET args
+app.config['USE_SESSION_FOR_NEXT'] = True
+login_manager = flask_login.LoginManager( app=app )
+login_manager.login_view = "login"
 
 
-def session_init( session ):
-    if 'jira_project' not in session:
-        session['jira_project'] = os.environ['JIRA_PROJECT']
+# reload the user object from the user ID stored in the session
+# https://flask-login.readthedocs.io/en/latest/
+@login_manager.user_loader
+def load_user( user_id ):
+    u = user.User( user_id )
+    if not u.is_authenticated():
+        u = None
+    return u
+
+
+# def session_init( session ):
+def session_init():
+    if 'jira_project' not in flask.session:
+        flask.session['jira_project'] = os.environ['JIRA_PROJECT']
+
+
+def session_update():
+    ''' Update the session with anything relevant.
+        Just the things we care about.
+    '''
+    # initialize for first run
+    session_init()
+    # get appropriate params based on request type
+    if flask.request.method == 'POST':
+        params = dict( **flask.request.form )
+    elif flask.request.method == 'GET':
+        params = dict( **flask.request.args )
+    # update any "valid" session keys that are present
+    valid_keys = [ 'jira_project' ]
+    for key in valid_keys:
+        if key in params:
+            session[ key ] = params[ key ]
 
 
 @app.route( '/' )
-def do_index():
-    session_init( flask.session )
+def index():
+    session_update()
     return flask.render_template(
         'index.html',
         timestamp=datetime.datetime.now(),
@@ -22,14 +59,37 @@ def do_index():
     )
 
 
-@app.route( '/sprint_relatives', methods=['POST','GET'] )
+@app.route( '/login', methods=['POST', 'GET'] )
+def login():
+    print( f'start login, method={flask.request.method}' )
+    if flask.request.method == 'POST':
+        sanitized_parts = libweb.sanitize_dict( flask.request.form )
+        uid = libjira.jira_login( **sanitized_parts )
+        print( f"login:POST (uid from jira)='{uid}'" )
+        if uid:
+            u = user.User( uid )
+            flask_login.login_user( u )
+            flask.flash('Logged in successfully.')
+            next = flask.session['next']
+            print( f"login:POST next='{next}'" )
+            return flask.redirect(next or flask.url_for('index'))
+        else:
+            flask.abort( 401 )
+    else:
+        return flask.render_template( 'login.html' )
+
+
+@app.route( '/sprint_relatives', methods=['POST', 'GET'] )
+@flask_login.login_required
 def do_sprint_relatives():
     import sprint_relatives
-    session_init( flask.session )
+    session_update()
+    params = dict( jira_session_id=flask.session['_user_id'] )
     if flask.request.method == 'POST':
-        data = sprint_relatives.run( **flask.request.form )
-    elif flask.request.method == 'GET':
-        data = sprint_relatives.run( **flask.request.args )
+        params |= flask.request.form
+    else:
+        params |= flask.request.args
+    data = sprint_relatives.run( **params )
     return flask.render_template(
         'sprint_relatives.html',
         **data,
@@ -37,13 +97,16 @@ def do_sprint_relatives():
 
 
 @app.route( '/lost_children', methods=['POST', 'GET'] )
+@flask_login.login_required
 def do_lost_children():
     import lost_children
-    session_init( flask.session )
+    session_update()
+    params = dict( jira_session_id=flask.session['_user_id'] )
     if flask.request.method == 'POST':
-        data = lost_children.run( **flask.request.form )
-    elif flask.request.method == 'GET':
-        data = lost_children.run( **flask.request.args )
+        params |= flask.request.form
+    else:
+        params |= flask.request.args
+    data = lost_children.run( **params )
     return flask.render_template(
         'lost_children.html',
         **data,
@@ -51,12 +114,15 @@ def do_lost_children():
 
 
 @app.route( '/tasks_from_description', methods=['POST', 'GET'] )
+@flask_login.login_required
 def do_tasks_from_description():
     import tasks_from_description
-    session_init( flask.session )
+    session_update()
+    params = dict( jira_session_id=flask.session['_user_id'] )
     data = {}
     if flask.request.method == 'POST':
-        data = tasks_from_description.run( **flask.request.form )
+        params |= flask.request.form
+        data = tasks_from_description.run( **params )
     return flask.render_template(
         'tasks_from_description.html',
         **data,
@@ -64,35 +130,20 @@ def do_tasks_from_description():
 
 
 @app.route( '/add_children', methods=['POST', 'GET'] )
+@flask_login.login_required
 def do_add_children():
     import add_children
-    session_init( flask.session )
+    session_update()
+    params = dict( jira_session_id=flask.session['_user_id'] )
     data = {}
     if flask.request.method == 'POST':
+        params |= flask.request.form
         try:
-            data = add_children.run( **flask.request.form )
+            data = add_children.run( **params )
         except UserWarning as e:
             data['errors'] = str( e )
     return flask.render_template(
         'add_children.html',
-        **data,
-    )
-
-
-@app.route( '/convert_subtasks', methods=['POST','GET'] )
-def do_convert_subtasks():
-    session_init( flask.session )
-    debug = None
-    data = {}
-    if flask.request.method == 'POST':
-        import mk_children_from_subtasks
-        data = mk_children_from_subtasks.run( **flask.request.form )
-        # debug = ( 'This is the data from convert_subtasks()\n'
-        #     f'{data}'
-        # )
-    return flask.render_template( 
-        'convert_subtasks.html',
-        debug=debug,
         **data,
     )
 
