@@ -46,6 +46,11 @@ def jira_login( token=None, username=None, passwd=None ):
     return key
 
 
+def jira_logout( session_id ):
+    if session_id:
+        del resources[ session_id ]
+
+
 def get_jira( session_id=None ):
     print( f"JL.get_jira session_id='{session_id}'" )
     conn = None

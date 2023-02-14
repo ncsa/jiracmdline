@@ -1,13 +1,26 @@
+<p class="home"><a href="{{ url_for('index') }}">Jira Cmdline</a></p>
 <div class="topnav">
-	<form method="get">
-  <label for="project">Jira Project:</label>
-  <input type="text" id="project" name="project" size=10 value="{{ session['jira_project'] }}" />
-  <button type="submit" formaction="/sprint_relatives">Sprint Relatives</button>
-  <button type="submit" formaction="/lost_children">Lost Children</button>
-  </form>
-
-	<form method="get">
-  <button type="submit" formaction="/tasks_from_description">Tasks from Description</button>
-	<button type="submit" formaction="/add_children">Add Children</button>
-  </form>
+  <div class="topnav_l">
+    <form method="get">
+      <label for="project">Jira Project:</label>
+      <input type="text" id="project" name="project" size=10 value="{{ session['jira_project'] }}" />
+      <button type="submit" formaction="/sprint_relatives">Sprint Relatives</button>
+      <button type="submit" formaction="/lost_children">Lost Children</button>
+    </form>
+    <form method="get">
+      <button type="submit" formaction="/tasks_from_description">Tasks from Description</button>
+      <button type="submit" formaction="/add_children">Add Children</button>
+    </form>
+  </div>
+  <div class="topnav_r">
+    <form method="get">
+      {% if current_user.is_authenticated %}
+        Logged in as: <span class="username">{{ current_user.username() }}</span>
+        <br />
+        <button class="topnav_r" type="submit" formaction="/logout">Logout</button>
+      {% else %}
+        <button type="submit" formaction="/login">Login</button>
+      {% endif %}
+    </form>
+  </div>
 </div>

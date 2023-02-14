@@ -70,13 +70,25 @@ def login():
             u = user.User( uid )
             flask_login.login_user( u )
             flask.flash('Logged in successfully.')
-            next = flask.session['next']
-            print( f"login:POST next='{next}'" )
-            return flask.redirect(next or flask.url_for('index'))
+            try:
+                next = flask.session['next']
+                print( f"login:POST next='{next}'" )
+            except KeyError:
+                next = flask.url_for('index')
+                print( f"login:POST next=KeyError; using index instead" )
+            return flask.redirect( next )
         else:
             flask.abort( 401 )
     else:
         return flask.render_template( 'login.html' )
+
+
+@app.route( '/logout' )
+@flask_login.login_required
+def logout():
+    user.User( flask.session['_user_id'] ).logout() #delete jira connection
+    flask_login.logout_user() #delete cookie
+    return flask.redirect( flask.url_for('index') )
 
 
 @app.route( '/sprint_relatives', methods=['POST', 'GET'] )

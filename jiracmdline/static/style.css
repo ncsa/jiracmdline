@@ -16,6 +16,7 @@ tr.story {
 .topnav {
   overflow: hidden;
   background-color: #ccc;
+  font-family: Helvetica, Arial, sans-serif;
 }
 
 .topnav button, input, label {
@@ -33,6 +34,21 @@ tr.story {
   color: white;
 }
 
+.topnav_l {
+  float: left;
+  margin: 0px 4px;
+}
+
+.topnav_r {
+  float: right;
+  margin: 0px 4px;
+}
+
+.username {
+  font-family: 'Times New Roman', serif;
+  font-weight: bold;
+}
+
 /* .topnav button.active { */
 /*   background-color: #1E3877; */
 /*   color: white; */
@@ -43,7 +59,7 @@ tr.story {
 .message-container {
   background-color: #ffe6bf;
   border: 1px solid #ffc266;
-  /* float: left; */
+  clear: both;
   padding: 20px 30px;
 }
 
@@ -62,7 +78,7 @@ tr.story {
 .error-container {
   background-color: #fce4e4;
   border: 1px solid #fcc2c3;
-  /* float: left; */
+  clear: both;
   padding: 20px 30px;
 }
 
