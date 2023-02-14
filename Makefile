@@ -1,9 +1,9 @@
 run:
-	docker-compose pull
-	docker-compose up
+	docker compose pull
+	docker compose up
 
 build:
-	docker-compose -f build.yaml up --build
+	docker compose -f build.yaml up --build
 
 cmdline:
 	bash go.sh
@@ -13,8 +13,8 @@ cmdline:
 # 	docker-compose -f build.yaml run gunicorn_project bash
 
 clean:
-	docker-compose down
-	docker-compose rm -f
+	docker compose down
+	docker compose rm -f
 	docker container prune -f
 	docker images | awk '/jiracmdline/ {print $$3}' | xargs -r docker rmi
 	docker system prune -f

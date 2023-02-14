@@ -99,16 +99,17 @@ class Jira_Connection( object ):
         return issue.key.split('-')[0]
 
 
-    def get_issues_in_epic( self, issue, include_completed_issues=False ):
-        jql = f'"Epic Link" = {issue.key}'
-        if include_completed_issues:
+    def get_issues_in_epic( self, issue_key, stories_only=False, exclude_completed_issues=True ):
+        jql = f'"Epic Link" = {issue_key}'
+        if stories_only:
+            jql = f'{jql} and type = Story'
+        if exclude_completed_issues:
             jql = f'{jql} and resolved is empty'
         return self.run_jql( jql )
 
 
-    def get_stories_in_epic( self, issue ):
-        children = self.get_issues_in_epic( issue )
-        return [ i for i in children if i.fields.issuetype.name == 'Story' ]
+    def get_stories_in_epic( self, issue_key ):
+        return self.get_issues_in_epic( issue_key, stories_only=True )
 
 
     def print_issue_summary( self, issue, parts=None ):

@@ -1,14 +1,13 @@
 {% extends "base.html" %}
 {% import 'macros.html' as m %}
-{% block title %}Tasks From Description{% endblock title %}
+{% block title %}Summary{% endblock title %}
 {% block content %}
-  <p></p>
-  <h1>Tasks From Description</h1>
+  <h1>Summary</h1>
   {% if issues %}
   <table>
     <tr>
       {% for h in headers %}
-        <th>{{ h|capitalize() }}</th>
+      <th>{{ h|capitalize() }}</th>
       {% endfor %}
     </tr>
     {% for issue in issues %}
@@ -16,14 +15,10 @@
     {% endfor %}
   </table>
   {% else %}
-    <h3>Enter Ticket ID's</h3>
+  <h3>Enter Ticket ID's</h3>
     <p class="instructions">
-      Create child tasks from (^TASK) lines in the description.
-      <br />
-      For each issue, find lines in the description that 
-      begin with the string "TASK ".
-      <br />
-      For each matching line, create a new "child" task.
+      For each Epic and/or Story, show the hierarchical summary
+      of all subordinate tasks.
     </p>
     <p class="ticket_form">
       <form method="post">

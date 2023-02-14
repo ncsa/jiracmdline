@@ -160,5 +160,24 @@ def do_add_children():
     )
 
 
+@app.route( '/summary', methods=['POST', 'GET'] )
+@flask_login.login_required
+def do_summary():
+    import summary
+    session_update()
+    params = dict( jira_session_id=flask.session['_user_id'] )
+    data = {}
+    if flask.request.method == 'POST':
+        params |= flask.request.form
+        try:
+            data = summary.run( **params )
+        except UserWarning as e:
+            data['errors'] = [ str( e ) ]
+    return flask.render_template(
+        'summary.html',
+        **data,
+    )
+
+
 if __name__ == '__main__':
     app.run()
