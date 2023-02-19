@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 
 import argparse
-import libjira
+import jira.exceptions
 import libweb
 import logging
 from simple_issue import simple_issue
@@ -48,10 +48,6 @@ def get_args( params=None ):
     return resources[key]
 
 
-def get_jira():
-    return libjira.get_jira( get_args().jira_session_id )
-
-
 def get_errors():
     key = 'errors'
     if key not in resources:
@@ -82,23 +78,16 @@ def mk_summaries( text ):
     return filtered_lines
 
 
-# def mk_children_from_description( issue ):
-#     args = get_args()
-#     j = libjira.get_jira()
-#     summaries = split_issue_description( issue )
-#     children = libjira.mk_child_tasks( parent=issue, child_summaries=summaries )
-#     return children
-
-
-def run( **kwargs ):
-    parts = libweb.process_kwargs( kwargs )
-    if parts:
+def run( current_user=None, **kwargs ):
+    if not current_user:
+        raise UserWarning( "needs updates yet for cmdline" )
+    else:
         reset()
-    print( f"KWARGS: '{parts}'" )
+        parts = libweb.process_kwargs( kwargs )
+        parts.append( '--output_format=raw' )
+        print( f"KWARGS: '{parts}'" )
     args = get_args( params=parts )
     print( f"ARGS: '{args}'" )
-
-    jc = get_jira() #jira_connection
 
     # process text into child task summaries
     summaries = mk_summaries( args.new_child_text )
@@ -106,26 +95,27 @@ def run( **kwargs ):
         raise UserWarning( 'unable to make summaries from text' )
     
     # get parent from jira
-    parent = jc.get_issue_by_key( args.parent )
-    if not parent:
+    try:
+        parent = current_user.get_issue_by_key( args.parent )
+    except jira.exceptions.JIRAError as e:
         raise UserWarning( f"No such ticket '{args.parent}'" )
 
     # get parent epic
-    epic = jc.get_epic_name( parent )
+    epic = current_user.get_epic_name( parent )
     if not epic:
         raise UserWarning( f"Parent '{parent.key}' has no Epic" )
 
-    children = jc.mk_child_tasks( parent=parent, child_summaries=summaries )
-    jc.add_tasks_to_epic( children, epic )
-    parent = jc.reload_issue( parent )
+    children = current_user.mk_child_tasks( parent=parent, child_summaries=summaries )
+    current_user.add_tasks_to_epic( children, epic )
+    parent = current_user.reload_issue( parent )
 
     if args.output_format == 'text':
-        jc.print_issue_summary( parent )
+        current_user.print_issue_summary( parent )
     else:
         headers = ( 'story', 'child', 'summary', 'epic', 'links' )
         raw_issues = [ parent ]
-        raw_issues.extend( jc.reload_issues( children ) )
-        issues = [ simple_issue.from_src( src=i, jcon=jc ) for i in raw_issues ]
+        raw_issues.extend( current_user.reload_issues( children ) )
+        issues = [ simple_issue.from_src( src=i, jcon=current_user.jira ) for i in raw_issues ]
         return {
             'headers': headers,
             'issues': issues,

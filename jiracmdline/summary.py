@@ -2,7 +2,6 @@
 
 import argparse
 import jira.exceptions
-import libjira
 import libweb
 import logging
 from simple_issue import simple_issue
@@ -50,10 +49,6 @@ def get_args( params=None ):
     return resources[key]
 
 
-def get_jira():
-    return libjira.get_jira( get_args().jira_session_id )
-
-
 def get_errors():
     key = 'errors'
     if key not in resources:
@@ -76,28 +71,28 @@ def warn( msg ):
     get_warnings().append( f'Warning: {msg}' )
 
 
-def run( **kwargs ):
-    parts = libweb.process_kwargs( kwargs )
-    if parts:
+def run( current_user=None, **kwargs ):
+    if not current_user:
+        raise UserWarning( "needs updates yet for cmdline" )
+    else:
         reset()
+        parts = libweb.process_kwargs( kwargs )
         parts.append( '--output_format=raw' )
-    print( f"KWARGS: '{parts}'" )
+        print( f"KWARGS: '{parts}'" )
     args = get_args( params=parts )
     print( f"ARGS: '{args}'" )
-
-    jc = get_jira() #jira_connection
 
     # load specified issues from jira
     parents = []
     for key in args.issues:
         try:
-            i = jc.get_issue_by_key( key )
+            i = current_user.get_issue_by_key( key )
         except jira.exceptions.JIRAError as e:
             raise UserWarning( e.text )
 
-        i_type = jc.get_issue_type( i )
+        i_type = current_user.get_issue_type( i )
         if i_type == 'Epic':
-            parents = jc.get_stories_in_epic( i )
+            parents = current_user.get_stories_in_epic( i )
         elif i_type == 'Story':
             parents = [ i ]
         else:
@@ -108,19 +103,18 @@ def run( **kwargs ):
         children = []
         logr.debug( f'got issue {p}' )
         try:
-            children = jc.get_linked_children( p )
+            children = current_user.get_linked_children( p )
         except jira.exceptions.JIRAError as e:
             raise UserWarning( e.text )
-            # continue
         raw_issues.append( p )
         raw_issues.extend( children )
 
     if args.output_format == 'text':
         for i in raw_issues:
-            jc.print_issue_summary( i )
+            current_user.print_issue_summary( i )
     else:
         headers = ( 'story', 'child', 'summary', 'epic', 'links' )
-        issues = [ simple_issue.from_src( src=i, jcon=jc ) for i in raw_issues ]
+        issues = [ simple_issue.from_src( src=i, jcon=current_user.jira ) for i in raw_issues ]
         return {
             'headers': headers,
             'issues': issues,

@@ -17,6 +17,12 @@ class Jira_Connection( object ):
         return cls( conn )
 
 
+    @classmethod
+    def from_user_token( cls, personal_access_token ):
+        conn = libjira.jira_login( token=personal_access_token )
+        return cls( conn )
+
+
     def __getattr__( self, name ):
         ''' Allow access to jira.JIRA attributes as a last resort.
         '''

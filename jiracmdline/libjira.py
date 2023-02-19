@@ -4,7 +4,6 @@ import jira_connection
 import logging
 import netrc
 import os
-import secrets
 
 # Module level resources
 logr = logging.getLogger( __name__ )
@@ -34,41 +33,33 @@ def jira_login( token=None, username=None, passwd=None ):
             params[ 'token_auth' ] = account
         else:
             params[ 'basic_auth' ] = ( login, pwd )
-    key = None
     try:
         raw_connection = jira.JIRA( **params )
     except jira.exceptions.JIRAError as e:
         if e.status_code != 401:
             raise e
-    else:
-        key = secrets.token_hex()
-        resources[ key ] = jira_connection.Jira_Connection( raw_connection )
-    return key
+    # return jira_connection.Jira_Connection( raw_connection )
+    return raw_connection
 
 
-def jira_logout( session_id ):
-    if session_id:
-        del resources[ session_id ]
+# def get_jira( session_id=None ):
+#     print( f"JL.get_jira session_id='{session_id}'" )
+#     conn = None
+#     if session_id:
+#         print( f"JL.get_jira lookup session_id in resources" )
+#         conn = resources[ session_id ]
+#     else:
+#         key = jira_login()
+#         if key:
+#             conn = resources[ key ]
+#     return conn
 
 
-def get_jira( session_id=None ):
-    print( f"JL.get_jira session_id='{session_id}'" )
-    conn = None
-    if session_id:
-        print( f"JL.get_jira lookup session_id in resources" )
-        conn = resources[ session_id ]
-    else:
-        key = jira_login()
-        if key:
-            conn = resources[ key ]
-    return conn
-
-
-def is_authenticated( session_id ):
-    status = False
-    if session_id in resources:
-        status = True
-    return status
+# def is_authenticated( session_id ):
+#     status = False
+#     if session_id in resources:
+#         status = True
+#     return status
 
 
 if __name__ == '__main__':

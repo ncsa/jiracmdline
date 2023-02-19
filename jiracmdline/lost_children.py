@@ -2,7 +2,6 @@
 
 import argparse
 import libcmdline
-import libjira
 import libweb
 import logging
 import os
@@ -50,10 +49,6 @@ def get_args( params=None ):
     return resources[key]
 
 
-def get_jira():
-    return libjira.get_jira( get_args().jira_session_id )
-
-
 def get_project():
     key = 'project'
     if key not in resources:
@@ -73,32 +68,34 @@ def get_project():
     return resources[key]
 
 
-def run( **kwargs ):
-    parts = libweb.process_kwargs( kwargs )
-    if parts:
+def run( current_user=None, **kwargs ):
+    if not current_user:
+        # need to create current_user (a logged in user)
+        raise UserWarning( "needs updates yet for cmdline" )
+    else:
         reset()
+        parts = libweb.process_kwargs( kwargs )
         parts.append( '--output_format=raw' )
-    print( f"KWARGS: '{parts}'" )
+        print( f"KWARGS: '{parts}'" )
     args = get_args( params=parts )
     print( f"ARGS: '{args}'" )
 
     logr.debug( "Get all the tasks that don't have an epic link" )
     jql = f'project = {get_project()} and type = Task and "Epic Link" is EMPTY'
-    tasks = get_jira().run_jql( jql )
+    tasks = current_user.run_jql( jql )
 
     logr.debug( "filter out tasks that don't have a \"linked parent\"" )
-    # this is necessary since we need the parent's Epic to assign it to the child
     issues = []
     for task in tasks:
-        p = get_jira().get_linked_parent( task )
+        p = current_user.get_linked_parent( task )
         if p:
             # attempt to find parent's Epic
-            epic = get_jira().get_epic_name( task )
+            epic = current_user.get_epic_name( task )
             if epic:
                 reason = f'Parent Epic: {epic}'
             else:
                 reason = f'Parent has no epic'
-            si = simple_issue.from_src( src=task, jcon=get_jira() )
+            si = simple_issue.from_src( src=task, jcon=current_user.jira )
             si.notes = reason
             issues.append( si )
 

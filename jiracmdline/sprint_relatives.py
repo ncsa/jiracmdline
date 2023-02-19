@@ -2,7 +2,6 @@
 
 import argparse
 import libcmdline
-import libjira
 import logging
 import os
 import libweb
@@ -53,10 +52,6 @@ def get_args( params=None ):
     return resources[key]
 
 
-def get_jira():
-    return libjira.get_jira( get_args().jira_session_id )
-
-
 def get_project():
     key = 'project'
     if key not in resources:
@@ -76,22 +71,22 @@ def get_project():
     return resources[key]
 
 
-def get_issues_in_sprint( sprint_name=None ):
+def get_issues_in_sprint( current_user, sprint_name=None ):
     jql = f'sprint in openSprints() and project = {get_project()}'
     if sprint_name:
         raise UserWarning( 'TODO' )
-    return get_jira().run_jql( jql )
+    return current_user.run_jql( jql )
 
 
 
-def stories_of_sprint( issues ):
+def stories_of_sprint( current_user, issues ):
     stories = []
     for i in issues:
         i_type = i.fields.issuetype.name
         if i_type == "Story":
             stories.append(i)
         elif i_type == "Task":
-            parent = get_jira().get_linked_parent(i) # returns None if not linked
+            parent = current_user.get_linked_parent(i) # returns None if not linked
             if parent:
                 stories.append(parent)
         else:
@@ -103,38 +98,40 @@ def stories_of_sprint( issues ):
     return set( stories ) # use a set to remove duplicates
 
 
-def run( **kwargs ):
-    parts = libweb.process_kwargs( kwargs )
-    if parts:
+def run( current_user=None, **kwargs ):
+    if not current_user:
+        raise UserWarning( "needs updates yet for cmdline" )
+    else:
         reset()
+        parts = libweb.process_kwargs( kwargs )
         parts.append( '--output_format=raw' )
-    print( f"KWARGS: '{parts}" )
+        print( f"KWARGS: '{parts}" )
     args = get_args( params=parts )
     print( f"ARGS: '{args}" )
 
     logr.debug( 'get sprint issues...' )
-    sprint_issues = get_issues_in_sprint()
+    sprint_issues = get_issues_in_sprint( current_user )
 
     # for any tasks in the sprint, get their parent story
     logr.debug( 'get stories in sprint...' )
-    stories = stories_of_sprint( sprint_issues )
+    stories = stories_of_sprint( current_user, sprint_issues )
 
     # get children for each story
     logr.debug( 'get sprint relatives...' )
     sprint_relatives = {}
     for s in stories:
-        children = get_jira().get_linked_children( s )
+        children = current_user.get_linked_children( s )
         sprint_relatives[ s ] = children
 
     # post process relatives
     logr.debug( 'post process relatives...' )
     issues = []
     for story, children in sprint_relatives.items():
-        issues.append( simple_issue.from_src( src=story, jcon=get_jira() ) )
+        issues.append( simple_issue.from_src( src=story, jcon=current_user.jira ) )
         if story in sprint_issues:
             sprint_issues.remove( story )
         for child in children:
-            issues.append( simple_issue.from_src( src=child, jcon=get_jira() ) )
+            issues.append( simple_issue.from_src( src=child, jcon=current_user.jira ) )
             if child in sprint_issues:
                 sprint_issues.remove( child )
 

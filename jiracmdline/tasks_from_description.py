@@ -2,7 +2,6 @@
 
 import argparse
 import jira.exceptions
-import libjira
 import libweb
 import logging
 import re
@@ -56,10 +55,6 @@ def get_args( params=None ):
     return resources[key]
 
 
-def get_jira():
-    return libjira.get_jira( get_args().jira_session_id )
-
-
 def get_errors():
     key = 'errors'
     if key not in resources:
@@ -96,12 +91,12 @@ def get_child_summaries( issue ):
     return summaries
 
 
-def mk_children_from_description( issue ):
+def mk_children_from_description( current_user, issue ):
     children = []
     args = get_args()
     summaries = get_child_summaries( issue )
     if summaries:
-        children = get_jira().mk_child_tasks(
+        children = current_user.mk_child_tasks(
             parent=issue,
             child_summaries=summaries,
             dryrun=args.dryrun
@@ -111,29 +106,30 @@ def mk_children_from_description( issue ):
     return children
 
 
-def run( **kwargs ):
-    parts = libweb.process_kwargs( kwargs )
-    if parts:
+def run( current_user=None, **kwargs ):
+    if not current_user:
+        # need to make an instance of user.User (a logged in user)
+        raise UserWarning( "needs updates yet for cmdline" )
+    else:
         reset()
+        parts = libweb.process_kwargs( kwargs )
         parts.append( '--output_format=raw' )
-    print( f"KWARGS: '{parts}'" )
+        print( f"KWARGS: '{parts}'" )
     args = get_args( params=parts )
     print( f"ARGS: '{args}'" )
-
-    jc = get_jira() #jira_connection
 
     # load specified issues from jira
     parents = []
     children = []
     try:
-        parents = jc.get_issues_by_keys( args.issues )
+        parents = current_user.get_issues_by_keys( args.issues )
     except jira.exceptions.JIRAError as e:
         error( e.text )
     raw_issues = []
     for p in parents:
         logr.debug( f'got issue {p}' )
         try:
-            children = mk_children_from_description( p )
+            children = mk_children_from_description( current_user, p )
         except UserWarning as e:
             warn( str( e ) )
             continue
@@ -141,16 +137,16 @@ def run( **kwargs ):
             raw_issues.append( p )
             # assign parent's epic to each child
             # TODO - catch jira error
-            epic_key = jc.get_epic_name( p )
+            epic_key = current_user.get_epic_name( p )
             if not args.dryrun:
-                jc.add_tasks_to_epic( children, epic_key )
-            raw_issues.extend( jc.reload_issues( children ) )
+                current_user.add_tasks_to_epic( children, epic_key )
+            raw_issues.extend( current_user.reload_issues( children ) )
     if args.output_format == 'text':
         for i in raw_issues:
-            jc.print_issue_summary( i )
+            current_user.print_issue_summary( i )
     else:
         headers = ( 'story', 'child', 'summary', 'epic', 'links' )
-        issues = [ simple_issue.from_src( src=i, jcon=jc ) for i in raw_issues ]
+        issues = [ simple_issue.from_src( src=i, jcon=current_user.jira ) for i in raw_issues ]
         return {
             'headers': headers,
             'issues': issues,
