@@ -1,7 +1,6 @@
 import datetime
 import flask
 import flask_login
-import libjira
 import libweb
 import os
 import secrets

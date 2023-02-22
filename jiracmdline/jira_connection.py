@@ -12,12 +12,6 @@ class Jira_Connection( object ):
 
 
     @classmethod
-    def from_session_id( cls, session_id ):
-        conn = libjira.get_jira( session_id )
-        return cls( conn )
-
-
-    @classmethod
     def from_user_token( cls, personal_access_token ):
         conn = libjira.jira_login( token=personal_access_token )
         return cls( conn )

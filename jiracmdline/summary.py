@@ -40,8 +40,6 @@ def get_args( params=None ):
             choices=['text', 'raw' ],
             default='text',
             help=argparse.SUPPRESS )
-        # jira session id (from web form)
-        parser.add_argument( '--jira_session_id', help=argparse.SUPPRESS )
         args = parser.parse_args( params )
         if args.ticket_ids:
             args.issues.extend( args.ticket_ids.split() )

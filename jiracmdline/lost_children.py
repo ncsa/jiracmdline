@@ -43,8 +43,6 @@ def get_args( params=None ):
             choices=['text', 'raw' ],
             default='text',
             help=argparse.SUPPRESS )
-        # jira session id (from web form)
-        parser.add_argument( '--jira_session_id', help=argparse.SUPPRESS )
         resources[key] = parser.parse_args( params )
     return resources[key]
 

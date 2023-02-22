@@ -42,25 +42,5 @@ def jira_login( token=None, username=None, passwd=None ):
     return raw_connection
 
 
-# def get_jira( session_id=None ):
-#     print( f"JL.get_jira session_id='{session_id}'" )
-#     conn = None
-#     if session_id:
-#         print( f"JL.get_jira lookup session_id in resources" )
-#         conn = resources[ session_id ]
-#     else:
-#         key = jira_login()
-#         if key:
-#             conn = resources[ key ]
-#     return conn
-
-
-# def is_authenticated( session_id ):
-#     status = False
-#     if session_id in resources:
-#         status = True
-#     return status
-
-
 if __name__ == '__main__':
     raise SystemExit( 'not a cmdline module' )
