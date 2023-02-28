@@ -9,7 +9,7 @@ class simple_issue:
     key: str = ''
     story: str = ''
     child: str = ''
-    due: str = None
+    due: str = ''
     in_sprint: str = ''
     summary: str = ''
     issue_type: str = ''
@@ -17,6 +17,8 @@ class simple_issue:
     links: list[str] = dataclasses.field( default_factory=list )
     epic: str = None
     notes: str = ''
+    resolution: str = ''
+    resolved: str = ''
 
 
     def __post_init__( self ):
@@ -24,6 +26,8 @@ class simple_issue:
             self.due = '-'
         if not self.epic:
             self.epic = '-'
+        if self.resolution:
+            self.resolved = 'resolved'
 
 
     @classmethod
@@ -46,6 +50,8 @@ class simple_issue:
         params['url'] = f'{jcon.server_url}/browse/{src.key}'
         params['key'] = src.key
         params['epic'] = jcon.get_epic_name( src )
+        if src.fields.resolution:
+            params['resolution'] = src.fields.resolution.name
         params['links'] = []
         for link in liblink.get_linked_issues( src ):
             if link.direction == 'inward':
@@ -54,6 +60,36 @@ class simple_issue:
                 link_text = link.link_type.outward
             params['links'].append( f'{link_text} {link.remote_issue.key}' )
         return cls( **params )
+
+
+    def __eq__( self, other ):
+        if isinstance( other, simple_issue ):
+            return (self.due, self.key) == (other.due, other.key)
+        return NotImplemented
+
+
+    def __lt__( self, other ):
+        if isinstance( other, simple_issue ):
+            return (self.due, self.key) < (other.due, other.key)
+        return NotImplemented
+
+
+    def __le__( self, other ):
+        if isinstance( other, simple_issue ):
+            return (self.due, self.key) <= (other.due, other.key)
+        return NotImplemented
+
+
+    def __gt__( self, other ):
+        if isinstance( other, simple_issue ):
+            return (self.due, self.key) > (other.due, other.key)
+        return NotImplemented
+
+
+    def __ge__( self, other ):
+        if isinstance( other, simple_issue ):
+            return (self.due, self.key) >= (other.due, other.key)
+        return NotImplemented
 
 
 if __name__ == '__main__':

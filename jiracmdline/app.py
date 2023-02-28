@@ -210,8 +210,6 @@ def do_summary():
             data = summary.run( **params )
         except UserWarning as e:
             data['errors'] = [ str( e ) ]
-    else:
-        data['errors'] = [ 'missing "Ticket IDs"' ]
     return flask.render_template(
         'summary.html',
         **data,

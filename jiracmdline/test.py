@@ -1,7 +1,8 @@
-import jira
-import pprint
 import collections
+import jira
+import json
 import logging
+import pprint
 
 logfmt = '%(levelname)s:%(funcName)s[%(lineno)d] %(message)s'
 loglvl = logging.INFO
@@ -162,14 +163,16 @@ if __name__ == '__main__':
     # print( ">>>PROJECTS" )
     # print_all_projects()
 
-    # elems = [ f'SVCPLAN-{x}' for x in range( 289, 295 ) ]
-    elems = [ f'SVCPLAN-{x}' for x in range( 289, 292 ) ]
-    jql = f'id in ({",".join(elems)})'
-    issues = get_jira().search_issues( jql, maxResults=9999 )
+    print( json.dumps( get_jira().issue('SVCPLAN-398').raw ) )
 
-    # issues = get_all_subtasks()
+    # # elems = [ f'SVCPLAN-{x}' for x in range( 289, 295 ) ]
+    # elems = [ f'SVCPLAN-{x}' for x in range( 289, 292 ) ]
+    # jql = f'id in ({",".join(elems)})'
+    # issues = get_jira().search_issues( jql, maxResults=9999 )
 
-    for i in issues:
-    #     add_childof_label( i )
-        # link_to_parent( i )
-        print_issue_summary( i )
+    # # issues = get_all_subtasks()
+
+    # for i in issues:
+    # #     add_childof_label( i )
+    #     # link_to_parent( i )
+    #     print_issue_summary( i )

@@ -11,6 +11,12 @@ tr.story {
 	background-color: #e0e0e0;
 }
 
+tr.resolved {
+  color: #999;
+  font-style: italic;
+  font-size: 90%;
+}
+
 
 /* TOPNAV */
 .topnav {

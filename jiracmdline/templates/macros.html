@@ -1,5 +1,5 @@
 {% macro issue_tr( headers, issue ) -%}
-<tr class="{{ issue.issue_type }}">
+<tr class="{{ issue.issue_type }} {{ issue.resolved }}">
     {% for h in headers %}
       {% if h in ["key", "story", "child" ] %}
         <td><a href="{{ issue.url }}">{{ issue[ h ] }}</a></td>

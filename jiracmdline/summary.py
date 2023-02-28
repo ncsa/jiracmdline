@@ -81,7 +81,8 @@ def run( current_user=None, **kwargs ):
     print( f"ARGS: '{args}'" )
 
     # load specified issues from jira
-    parents = []
+    parents = {}
+    simple_parents = []
     for key in args.issues:
         try:
             i = current_user.get_issue_by_key( key )
@@ -90,32 +91,38 @@ def run( current_user=None, **kwargs ):
 
         i_type = current_user.get_issue_type( i )
         if i_type == 'Epic':
-            parents = current_user.get_stories_in_epic( i )
+            for p in current_user.get_stories_in_epic( i ):
+                parents[ p.key ] = p
+                simple_parents.append( simple_issue.from_src( src=p, jcon=current_user.jira ) )
         elif i_type == 'Story':
-            parents = [ i ]
+            parents[ i.key ] = i
+            simple_parents.append( simple_issue.from_src( src=i, jcon=current_user.jira ) )
         else:
             raise UserWarning( f'Not a Story or Epic: {key}' )
+
+    simple_parents.sort()
+    all_issues = []
     
-    raw_issues = []
-    for p in parents:
-        children = []
+    for simple_p in simple_parents:
+        p = parents[ simple_p.key ]
         logr.debug( f'got issue {p}' )
         try:
             children = current_user.get_linked_children( p )
         except jira.exceptions.JIRAError as e:
             raise UserWarning( e.text )
-        raw_issues.append( p )
-        raw_issues.extend( children )
+        simple_children = [ simple_issue.from_src( src=c, jcon=current_user.jira ) for c in children ]
+        simple_children.sort()
+        all_issues.extend( simple_children )
 
     if args.output_format == 'text':
-        for i in raw_issues:
-            current_user.print_issue_summary( i )
+        # for i in raw_issues:
+        #     current_user.print_issue_summary( i )
+        raise UserWarning( "needs review ..." )
     else:
-        headers = ( 'story', 'child', 'summary', 'epic', 'links' )
-        issues = [ simple_issue.from_src( src=i, jcon=current_user.jira ) for i in raw_issues ]
+        headers = ( 'story', 'child', 'summary', 'due', 'epic', 'links', 'resolution' )
         return {
             'headers': headers,
-            'issues': issues,
+            'issues': all_issues,
             'errors': get_errors(),
             'messages': get_warnings(),
         }
