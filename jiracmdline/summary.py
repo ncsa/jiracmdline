@@ -105,13 +105,14 @@ def run( current_user=None, **kwargs ):
     
     for simple_p in simple_parents:
         p = parents[ simple_p.key ]
-        logr.debug( f'got issue {p}' )
+        logr.debug( f"processing parent '{p}'" )
         try:
             children = current_user.get_linked_children( p )
         except jira.exceptions.JIRAError as e:
             raise UserWarning( e.text )
         simple_children = [ simple_issue.from_src( src=c, jcon=current_user.jira ) for c in children ]
         simple_children.sort()
+        all_issues.append( simple_p )
         all_issues.extend( simple_children )
 
     if args.output_format == 'text':

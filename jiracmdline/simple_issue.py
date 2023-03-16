@@ -1,6 +1,7 @@
 import dataclasses
 import liblink
 import libsprint
+import packaging
 
 
 @dataclasses.dataclass
@@ -61,34 +62,39 @@ class simple_issue:
             params['links'].append( f'{link_text} {link.remote_issue.key}' )
         return cls( **params )
 
+    def key_parts( self ):
+        '''Split the key into string and numeric parts to enable better sorting
+        '''
+        x, y = self.key.split( sep='-', maxsplit=1 )
+        return (x, int(y) )
 
     def __eq__( self, other ):
         if isinstance( other, simple_issue ):
-            return (self.due, self.key) == (other.due, other.key)
+            return (self.due, self.key_parts()) == (other.due, other.key_parts())
         return NotImplemented
 
 
     def __lt__( self, other ):
         if isinstance( other, simple_issue ):
-            return (self.due, self.key) < (other.due, other.key)
+            return (self.due, self.key_parts()) < (other.due, other.key_parts())
         return NotImplemented
 
 
     def __le__( self, other ):
         if isinstance( other, simple_issue ):
-            return (self.due, self.key) <= (other.due, other.key)
+            return (self.due, self.key_parts()) <= (other.due, other.key_parts())
         return NotImplemented
 
 
     def __gt__( self, other ):
         if isinstance( other, simple_issue ):
-            return (self.due, self.key) > (other.due, other.key)
+            return (self.due, self.key_parts()) > (other.due, other.key_parts())
         return NotImplemented
 
 
     def __ge__( self, other ):
         if isinstance( other, simple_issue ):
-            return (self.due, self.key) >= (other.due, other.key)
+            return (self.due, self.key_parts()) >= (other.due, other.key_parts())
         return NotImplemented
 
 
