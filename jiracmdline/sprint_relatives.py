@@ -98,7 +98,7 @@ def stories_of_sprint( current_user, issues ):
 
 def run( current_user=None, **kwargs ):
     if not current_user:
-        raise UserWarning( "needs updates yet for cmdline" )
+        raise UserWarning( "Not implemented for cmdline" )
     else:
         reset()
         parts = libweb.process_kwargs( kwargs )
@@ -112,32 +112,36 @@ def run( current_user=None, **kwargs ):
 
     # for any tasks in the sprint, get their parent story
     logr.debug( 'get stories in sprint...' )
-    stories = stories_of_sprint( current_user, sprint_issues )
+    parents = {}
+    simple_parents = []
+    for s in stories_of_sprint( current_user, sprint_issues ):
+    # stories = stories_of_sprint( current_user, sprint_issues )
+        parents[s.key] = s
+        simple_parents.append( simple_issue.from_src( src=s, jcon=current_user.jira ) )
+    simple_parents.sort()
 
-    # get children for each story
-    logr.debug( 'get sprint relatives...' )
-    sprint_relatives = {}
-    for s in stories:
-        children = current_user.get_linked_children( s )
-        sprint_relatives[ s ] = children
+    all_issues = []
 
-    # post process relatives
-    logr.debug( 'post process relatives...' )
-    issues = []
-    for story, children in sprint_relatives.items():
-        issues.append( simple_issue.from_src( src=story, jcon=current_user.jira ) )
-        if story in sprint_issues:
-            sprint_issues.remove( story )
-        for child in children:
-            issues.append( simple_issue.from_src( src=child, jcon=current_user.jira ) )
-            if child in sprint_issues:
-                sprint_issues.remove( child )
+    for simple_p in simple_parents:
+        p = parents[ simple_p.key ]
+        logr.debug( f"processing parent '{p}'" )
+        try:
+            children = current_user.get_linked_children( p )
+        except jira.exceptions.JIRAError as e:
+            raise UserWarning( e.text )
+        simple_children = [ simple_issue.from_src( src=c, jcon=current_user.jira ) for c in children ]
+        simple_children.sort()
+        all_issues.append( simple_p )
+        all_issues.extend( simple_children )
 
     headers = ('story', 'child', 'due', 'in_sprint', 'summary')
     if args.output_format == 'text':
         libcmdline.text_table( headers, issues )
     else:
-        return { 'headers': headers, 'issues': issues }
+        return {
+            'headers': headers,
+            'issues': all_issues,
+        }
 
 
 if __name__ == '__main__':
