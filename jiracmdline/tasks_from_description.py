@@ -135,7 +135,7 @@ def run( current_user=None, **kwargs ):
             raw_issues.append( p )
             # assign parent's epic to each child
             # TODO - catch jira error
-            epic_key = current_user.get_epic_name( p )
+            epic_key = current_user.get_epic_key( p )
             if not args.dryrun:
                 current_user.add_tasks_to_epic( children, epic_key )
             raw_issues.extend( current_user.reload_issues( children ) )

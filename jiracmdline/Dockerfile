@@ -12,8 +12,5 @@ COPY static/ ${APPDIR}/static/
 COPY templates/ ${APPDIR}/templates/
 RUN pip install --no-cache-dir -r ${APPDIR}/requirements.txt
 
-# Jira library uses credentials from .netrc
-RUN ln -s /home/.netrc /root/.netrc
-
 WORKDIR ${APPDIR}
 ENTRYPOINT [ "./entrypoint.sh" ]

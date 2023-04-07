@@ -99,7 +99,7 @@ def run( current_user=None, **kwargs ):
         raise UserWarning( f"No such ticket '{args.parent}'" )
 
     # get parent epic
-    epic = current_user.get_epic_name( parent )
+    epic = current_user.get_epic_key( parent )
     if not epic:
         raise UserWarning( f"Parent '{parent.key}' has no Epic" )
 

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% import 'macros.html' as m %}
+
+{% block extra_head %}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet", type="text/css", href="/static/viewport.css" />
+{% endblock extra_head %}
+
+{% block title %}Service Overview for {{ service_name }}{% endblock title %}
+
+{% block content %}
+  {% if epics is defined %}
+    <h1>Service Overview for {{ service_name }}</h1>
+    <div class="row">
+      {% for e_key, e_data in epics.items() %}
+      <div class="section">
+        <h2>
+          <a href="{{e_data['epic'].url}}">{{ e_data['epic'].epic_name }}</a>
+        </h2>
+        <table>
+          <tr>
+            {% for h in headers %}
+            <th>{{ h|capitalize() }}</th>
+            {% endfor %}
+          </tr>
+          {% for issue in e_data['subordinates'] %}
+            {{ m.issue_tr( headers, issue ) }}
+          {% endfor %}
+        </table>
+      </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock content %}

@@ -59,12 +59,26 @@ class Jira_Connection( object ):
 
 
     @staticmethod
-    def get_epic_name( issue ) :
+    def get_epic_key( issue ) :
+        ''' Epic that this issue is a part of
+        '''
         try:
-            epic = issue.fields.customfield_10536
+            key = issue.fields.customfield_10536
         except AttributeError:
-            epic = None
-        return epic
+            key = None
+        return key
+
+
+    @staticmethod
+    def get_epic_name( issue ) :
+        ''' The name of the epic. Assumes "issue" is an epic.
+            If "issue" is not an epic, return None.
+        '''
+        try:
+            name = issue.fields.customfield_10537
+        except AttributeError:
+            name = None
+        return name
 
 
     def get_parent( self, issue ):

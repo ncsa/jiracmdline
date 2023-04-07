@@ -138,6 +138,58 @@ def do_lost_children():
     )
 
 
+@app.route( '/service_list' )
+@flask_login.login_required
+def do_service_list():
+    import service_list
+    session_update()
+    valid_params=[ 'project' ]
+    params = {}
+    data = {}
+    try:
+        params = { k:flask.request.args[k] for k in valid_params }
+    except KeyError:
+        params = {}
+    if params:
+        params['current_user'] = flask_login.current_user
+        try:
+            data = service_list.run( **params )
+        except UserWarning as e:
+            data['errors'] = [ str( e ) ]
+    else:
+        data['errors'] = [ "missing 'Project'" ]
+    return flask.render_template(
+        'service_list.html',
+        **data,
+    )
+
+
+@app.route( '/service_overview' )
+@flask_login.login_required
+def do_service_overview():
+    import service_overview
+    session_update()
+    valid_params=[ 'project', 'service_name' ]
+    params = {}
+    data = {}
+    try:
+        params = { k:flask.request.args[k] for k in valid_params }
+    except KeyError:
+        params = {}
+    if params:
+        params['current_user'] = flask_login.current_user
+        try:
+            data = service_overview.run( **params )
+        except UserWarning as e:
+            data['errors'] = [ str( e ) ]
+    else:
+        data['errors'] = [ f"missing one or more of {','.join(valid_params)}" ]
+    return flask.render_template(
+        'service_overview.html',
+        **data,
+    )
+
+
 @app.route( '/tasks_from_description' )
 @flask_login.login_required
 def do_tasks_from_description():

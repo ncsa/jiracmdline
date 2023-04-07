@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Service List{% endblock title %}
+{% block content %}
+  <h1>Service List</h1>
+  <p>
+    {% for name,target in service_links.items() %}
+      <a href="{{target}}">{{name}}</a></br>
+    {% endfor %}
+  </p>
+{% endblock content %}

@@ -1,0 +1,35 @@
+/* Style the body */
+/* body { */
+/*     font-family: Arial, Helvetica, sans-serif; */
+/*     margin: 0; */
+/* } */
+
+/* table, th, td { */
+/*   border: 1px solid black; */
+/*   border-collapse: collapse; */
+/*   padding: 4px; */
+/* } */
+
+/* Column container */
+div.row {  
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+div.section {
+  margin: 3pt;
+  border: 2px solid gray;
+  border-radius: 5px;
+    padding: 5pt;
+}
+
+/* div.section h2 { */
+/*   text-decoration: overline underline; */
+/* } */
+
+@media screen and (max-width: 700px) {
+  .row, .navbar {   
+    flex-direction: column;
+  }
+}
