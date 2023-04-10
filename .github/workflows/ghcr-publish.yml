@@ -1,4 +1,4 @@
-name: Docker Publish
+name: GHCR Publish
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -18,9 +18,8 @@ on:
 
 env:
   # github.repository as <account>/<repo>
-  #IMAGE_NAME: ${{ github.repository }}
-  IMAGE_NAME: "andylytical/jiracmdline"
-  REGISTRY: "docker.io"
+  IMAGE_NAME: ${{ github.repository }}
+  REGISTRY: "ghcr.io"
 
 
 jobs:
@@ -55,9 +54,9 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
-          # registry: ${{ env.REGISTRY }}
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
