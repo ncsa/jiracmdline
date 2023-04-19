@@ -113,6 +113,7 @@ def run( current_user=None, **kwargs ):
 
     data = {
         'service_name': args.service_name,
+        'service_name_short': args.service_name.strip(')').split('(')[-1],
         'epics': epics,
         'headers': ( 'story', 'child', 'summary', 'due', ),
         }

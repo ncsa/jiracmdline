@@ -9,7 +9,6 @@ from simple_issue import simple_issue
 
 
 # Module level resources
-logr = logging.getLogger( __name__ )
 resources = {}
 
 
@@ -61,7 +60,7 @@ def get_project():
                     'No jira project specified.'
                     ' Set JIRA_PROJECT or specify via cmdline option.'
                 )
-                # logr.exception( msg )
+                # logging.exception( msg )
                 raise UserWarning( msg )
     return resources[key]
 
@@ -78,11 +77,11 @@ def run( current_user=None, **kwargs ):
     args = get_args( params=parts )
     print( f"ARGS: '{args}'" )
 
-    logr.debug( "Get all the tasks that don't have an epic link" )
+    logging.debug( "Get all the tasks that don't have an epic link" )
     jql = f'project = {get_project()} and type = Task and "Epic Link" is EMPTY'
     tasks = current_user.run_jql( jql )
 
-    logr.debug( "filter out tasks that don't have a \"linked parent\"" )
+    logging.debug( "filter out tasks that don't have a \"linked parent\"" )
     issues = []
     for task in tasks:
         p = current_user.get_linked_parent( task )
@@ -120,7 +119,7 @@ if __name__ == '__main__':
     # logfmt = logging.Formatter( fmtstr )
     # ch = logging.StreamHandler()
     # ch.setFormatter( logfmt )
-    # logr.addHandler( ch )
+    # logging.addHandler( ch )
 
     # # Configure root logger
     # root = logging.getLogger()
