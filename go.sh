@@ -1,17 +1,10 @@
-DEBUG=0
-REPO=andylytical/jiracmdline
+DEBUG=1
+REGISTRY=ghcr.io
+REPO=ncsa/jiracmdline
 
 function latest_tag {
   [[ "$DEBUG" -eq 1 ]] && set -x
-  local _page=1
-  local _pagesize=100
-  local _baseurl=https://registry.hub.docker.com/v2/repositories
-
-  curl -L -s "${_baseurl}/${REPO}/tags?page=${_page}&page_size=${_pagesize}" \
-  | jq '."results"[]["name"]' \
-  | sed -e 's/"//g' \
-  | sort -r \
-  | head -1
+  echo "production"
 }
 
 [[ "$DEBUG" -eq 1 ]] && set -x
@@ -23,4 +16,4 @@ docker run -it --pull always \
 -e JIRA_SERVER=jira.ncsa.illinois.edu \
 -e JIRA_PROJECT=SVCPLAN \
 --entrypoint "/bin/bash" \
-$REPO:$tag
+$REGISTRY/$REPO:$tag

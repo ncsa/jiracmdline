@@ -126,17 +126,6 @@ if __name__ == '__main__':
         loglvl = logging.DEBUG
     fmtstr = '%(levelname)s:%(pathname)s.%(module)s.%(funcName)s[%(lineno)d] %(message)s'
     logging.basicConfig( level=loglvl, format=fmtstr )
-    # logfmt = logging.Formatter( fmtstr )
-    # ch = logging.StreamHandler()
-    # ch.setFormatter( logfmt )
-    # logr.addHandler( ch )
-
-    # # Configure root logger
-    # root = logging.getLogger()
-    # root.setLevel( loglvl )
-    # rh = logging.StreamHandler()
-    # rh.setFormatter( logging.Formatter( fmtstr ) )
-    # root.addHandler( rh )
 
     no_debug = [
         'urllib3',

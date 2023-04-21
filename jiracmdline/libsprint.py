@@ -37,14 +37,7 @@ def get_active_sprint_name( issue ):
 
 
 def get_sprint_memberships( issue ):
-    pprint.pprint( issue )
     memberships = issue.fields.customfield_10535
-    pprint.pprint( memberships )
-    # try:
-    #     memberships = issue.fields.customfield_10535
-    # except AttributeError:
-    #     i = reload_issue( issue )
-    #     memberships = i.fields.customfield_10535
     sprints = []
     if memberships:
         for line in memberships:

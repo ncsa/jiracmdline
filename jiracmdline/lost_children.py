@@ -1,7 +1,11 @@
 #!/usr/local/bin/python3
 
 import argparse
+import jira_connection
 import libcmdline
+import libjira
+import liblink
+import libutil
 import libweb
 import logging
 import os
@@ -65,35 +69,53 @@ def get_project():
     return resources[key]
 
 
+def get_errors():
+    key = 'errors'
+    if key not in resources:
+        resources[key] = []
+    return resources[key]
+
+
+def error( msg ):
+    get_errors().append( f'Error: {msg}' )
+
+
+def get_warnings():
+    key = 'warnings'
+    if key not in resources:
+        resources[key] = []
+    return resources[key]
+
+
+def warn( msg ):
+    get_warnings().append( f'Warning: {msg}' )
+
+
 def run( current_user=None, **kwargs ):
+    parts = None
     if not current_user:
-        # need to create current_user (a logged in user)
-        raise UserWarning( "needs updates yet for cmdline" )
+        # started from cmdline
+        current_user = jira_connection.Jira_Connection( libjira.jira_login() )
     else:
         reset()
         parts = libweb.process_kwargs( kwargs )
         parts.append( '--output_format=raw' )
-        print( f"KWARGS: '{parts}'" )
+        logging.debug( f"KWARGS: '{parts}'" )
     args = get_args( params=parts )
-    print( f"ARGS: '{args}'" )
+    logging.debug( f"ARGS: '{args}'" )
 
-    logging.debug( "Get all the tasks that don't have an epic link" )
-    jql = f'project = {get_project()} and type = Task and "Epic Link" is EMPTY'
+    logging.debug( 'Get incomplete tasks' )
+    jql = f'project = {get_project()} and resolved is EMPTY and type not in (Epic)'
     tasks = current_user.run_jql( jql )
 
-    logging.debug( "filter out tasks that don't have a \"linked parent\"" )
+    logging.debug( "Check tasks for link problems" )
     issues = []
     for task in tasks:
-        p = current_user.get_linked_parent( task )
-        if p:
-            # attempt to find parent's Epic
-            epic = current_user.get_epic_key( task )
-            if epic:
-                reason = f'Parent Epic: {epic}'
-            else:
-                reason = f'Parent has no epic'
-            si = simple_issue.from_src( src=task, jcon=current_user.jira )
-            si.notes = reason
+        try:
+            liblink.check_for_link_problems( task )
+        except UserWarning as e:
+            si = simple_issue.from_src( src=task, jcon=current_user )
+            si.notes = str(e)
             issues.append( si )
 
     # render output
@@ -101,8 +123,17 @@ def run( current_user=None, **kwargs ):
     headers = ( 'key', 'summary', 'epic', 'links', 'notes' )
     if args.output_format == 'text':
         libcmdline.text_table( headers, issues )
+        for w in get_warnings():
+            print( w )
+        for e in get_errors():
+            print( e )
     else:
-        return { 'headers': headers, 'issues': issues }
+        return {
+            'headers': headers,
+            'issues': issues,
+            'errors': get_errors(),
+            'messages': get_warnings(),
+        }
 
 
 if __name__ == '__main__':
@@ -116,17 +147,6 @@ if __name__ == '__main__':
         loglvl = logging.DEBUG
     fmtstr = '%(levelname)s:%(pathname)s.%(module)s.%(funcName)s[%(lineno)d] %(message)s'
     logging.basicConfig( level=loglvl, format=fmtstr )
-    # logfmt = logging.Formatter( fmtstr )
-    # ch = logging.StreamHandler()
-    # ch.setFormatter( logfmt )
-    # logging.addHandler( ch )
-
-    # # Configure root logger
-    # root = logging.getLogger()
-    # root.setLevel( loglvl )
-    # rh = logging.StreamHandler()
-    # rh.setFormatter( logging.Formatter( fmtstr ) )
-    # root.addHandler( rh )
 
     no_debug = [
         'urllib3',

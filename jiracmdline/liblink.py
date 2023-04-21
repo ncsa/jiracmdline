@@ -1,4 +1,5 @@
 import collections
+import logging
 
 
 # Custom type for Linked_Issue
@@ -24,6 +25,31 @@ def get_linked_issues( issue ):
                 )
             )
     return linked_issues
+
+
+
+def check_for_link_problems( issue ):
+    logging.debug( f'{issue}' )
+    parents = []
+    children = []
+    for link in get_linked_issues( issue ):
+        logging.debug( f"found link '{link.link_type}' with name '{link.link_type.name}'" )
+        if link.link_type.name == "Ancestor":
+            if link.direction == 'outward':
+                children.append( link.remote_issue )
+            else:
+                parents.append( link.remote_issue )
+    issue_type = issue.fields.issuetype.name.lower()
+    if issue_type == 'story' and len( parents ) > 0:
+        raise UserWarning( 'Story has parent(s)' )
+    elif issue_type == 'task':
+        if len( children ) > 0:
+            raise UserWarning( 'Task has children' )
+        elif len( parents ) < 1:
+            raise UserWarning( 'Task has no parent' )
+        elif len( parents ) > 1:
+            raise UserWarning( 'Task has multiple parents' )
+    return False
 
 
 if __name__ == '__main__':
