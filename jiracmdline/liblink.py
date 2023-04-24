@@ -27,6 +27,20 @@ def get_linked_issues( issue ):
     return linked_issues
 
 
+def get_linked_parent( issue ):
+    logging.debug( f'{issue}' )
+    parents = []
+    for link in get_linked_issues( issue ):
+        if link.link_type.name == "Ancestor":
+            if link.direction == 'inward':
+                parents.append( link.remote_issue )
+    if len( parents ) < 1:
+        raise UserWarning( f'{issue} has no parent' )
+    elif len( parents ) > 1:
+        raise UserWarning( f'{issue} has multiple parents' )
+    return parents[-1]
+
+
 
 def check_for_link_problems( issue ):
     logging.debug( f'{issue}' )

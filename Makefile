@@ -1,12 +1,12 @@
-run:
-	docker compose pull
-	docker compose up
+cmdline:
+	bash go.sh
 
 build:
 	docker compose -f build.yaml up --build
 
-cmdline:
-	bash go.sh
+run:
+	docker compose pull
+	docker compose up
 
 # cmdline-build:
 # 	docker-compose -f build.yaml build

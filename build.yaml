@@ -12,7 +12,7 @@ services:
       - "static_web_files:/mnt/static_web_files"
 
   nginx:
-    image: docker.io/andylytical/nginx-as-gunicorn-proxy
+    image: ghcr.io/andylytical/nginx-as-gunicorn-proxy
     pull_policy: always
     ports:
       - "8080:80"

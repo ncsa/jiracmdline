@@ -1,14 +1,15 @@
 #!/usr/local/bin/python3
 
+# import libcmdline
 import argparse
 import jira_connection
-import libcmdline
 import libjira
 import liblink
+import libutil
 import libweb
 import logging
 import os
-import sys
+import pprint
 from simple_issue import simple_issue
 
 
@@ -26,7 +27,7 @@ def get_args( params=None ):
     if key not in resources:
         constructor_args = {
             'formatter_class': argparse.RawDescriptionHelpFormatter,
-            'description': 'Find issues with missing meta-data or conflicting with the Epic-Story-Child model.',
+            'description': 'Find issues having no Epic.',
             'epilog': (
                 'Environment Variables:\n'
                 '    NETRC:\n'
@@ -37,9 +38,9 @@ def get_args( params=None ):
             )
         }
         parser = argparse.ArgumentParser( **constructor_args )
+        parser.add_argument( '-a', '--autofix', action='store_true' )
         parser.add_argument( '-d', '--debug', action='store_true' )
         parser.add_argument( '-v', '--verbose', action='store_true' )
-        parser.add_argument( '-q', '--quiet', action='store_true' )
         parser.add_argument( '-p', '--project',
             help="Jira project from which to search for issues." )
         # raw output requested by web form
@@ -79,7 +80,6 @@ def get_errors():
 
 def error( msg ):
     get_errors().append( f'Error: {msg}' )
-    set_exit_code(3)
 
 
 def get_warnings():
@@ -91,24 +91,6 @@ def get_warnings():
 
 def warn( msg ):
     get_warnings().append( f'Warning: {msg}' )
-    set_exit_code(2)
-
-
-def get_exit_code():
-    key = 'exit_code'
-    try:
-        rv = resources[key]
-    except KeyError:
-        rv = 0
-    return rv
-
-
-def set_exit_code( new_code ):
-    key = 'exit_code'
-    try:
-        resources[key] = max( resources[key], new_code )
-    except KeyError:
-        resources[key] = new_code
 
 
 def run( current_user=None, **kwargs ):
@@ -117,63 +99,63 @@ def run( current_user=None, **kwargs ):
         # started from cmdline
         current_user = jira_connection.Jira_Connection( libjira.jira_login() )
     else:
+        raise UserWarning('not allowed')
         reset()
         parts = libweb.process_kwargs( kwargs )
         parts.append( '--output_format=raw' )
         logging.debug( f"KWARGS: '{parts}'" )
     args = get_args( params=parts )
     logging.debug( f"ARGS: '{args}'" )
-    problem_issues = []
 
-    logging.debug( 'Check for resolved stories with unresolved children' )
-    jql = f'project = {get_project()} and resolved is not EMPTY and type in (Story)'
-    stories = current_user.run_jql( jql )
-    for s in stories:
-        children = current_user.get_linked_children( s )
-        for c in children:
-            if not c.fields.resolution:
-                si = simple_issue.from_src( src=s, jcon=current_user )
-                si.notes = f"Resolved story with unresolved child: '{c.key}'"
-                problem_issues.append( si )
-                break
-        try:
-            liblink.check_for_link_problems( s )
-        except UserWarning as e:
-            si = simple_issue.from_src( src=s, jcon=current_user )
-            si.notes = str(e)
-            problem_issues.append( si )
+    logging.info( 'Get incomplete issues that have no epic link' )
+    jql = (
+        f'project = {get_project()}'
+        ' and resolved is EMPTY'
+        ' and type not in (Epic)'
+        ' and "Epic Link" is EMPTY'
+        )
+    logging.debug( f"jql: '{jql}'" )
+    # with libutil.timeblock( 'get all issues w/o epic' ):
+    issues = current_user.run_jql( jql )
 
-    logging.debug( 'Get unresolved issues for link problems' )
-    jql = f'project = {get_project()} and resolved is EMPTY and type not in (Epic)'
-    jira_issues = current_user.run_jql( jql )
-    for i in jira_issues:
-        try:
-            liblink.check_for_link_problems( i )
-        except UserWarning as e:
-            si = simple_issue.from_src( src=i, jcon=current_user )
-            si.notes = str(e)
-            problem_issues.append( si )
+    updates = {}
+    for i in issues:
+        issue_type = current_user.get_issue_type( i ).lower()
+        if issue_type == 'story':
+            epic = current_user.get_epic_key( i )
+            logging.debug( f"got epic {epic} for story {i}" )
+        else:
+            p = liblink.get_linked_parent( i )
+            p = current_user.reload_issue( p )
+            epic = current_user.get_epic_key( p )
+            logging.debug( f"got epic {epic} for parent {p} of issue {i}" )
+        if epic not in updates:
+            updates[epic] = []
+        updates[epic].append( i )
 
-    # render output
-    if args.output_format == 'text':
-        if not args.quiet:
-            if len( problem_issues ) > 0:
-                set_exit_code(1)
-                headers = ( 'key', 'notes' )
-                libcmdline.text_table( headers, problem_issues )
-            for w in get_warnings():
-                print( w )
-            for e in get_errors():
-                print( e )
-        sys.exit( get_exit_code() )
-    else:
-        headers = ( 'key', 'summary', 'epic', 'links', 'notes' )
-        return {
-            'headers': headers,
-            'issues': problem_issues,
-            'errors': get_errors(),
-            'messages': get_warnings(),
-        }
+    for epic, issue_list in updates.items():
+        print( f"Add to epic {epic}:" )
+        print( '\n'.join( map( str, issue_list ) ) )
+        if args.autofix:
+            current_user.add_tasks_to_epic( issue_list, epic )
+            print( 'Autofixed' )
+
+    # # render output
+    # args = get_args()
+    # headers = ( 'key', 'summary', 'epic', 'links', 'notes' )
+    # if args.output_format == 'text':
+    #     # libcmdline.text_table( headers, issues )
+    #     for w in get_warnings():
+    #         print( w )
+    #     for e in get_errors():
+    #         print( e )
+    # else:
+    #     return {
+    #         'headers': headers,
+    #         # 'issues': issues,
+    #         'errors': get_errors(),
+    #         'messages': get_warnings(),
+    #     }
 
 
 if __name__ == '__main__':
@@ -186,7 +168,7 @@ if __name__ == '__main__':
     if args.debug:
         loglvl = logging.DEBUG
     fmtstr = '%(levelname)s:%(pathname)s.%(module)s.%(funcName)s[%(lineno)d] %(message)s'
-    logging.basicConfig( level=loglvl, format=fmtstr )
+    logging.basicConfig( force=True, level=loglvl, format=fmtstr )
 
     no_debug = [
         'urllib3',
