@@ -20,8 +20,11 @@ def jira_login( token=None, username=None, passwd=None ):
         'validate': True,
     }
     if token:
+        logr.info( f'Login using token from params' )
+        logr.debug( f"Got token '{token}' from params" )
         params[ 'token_auth' ] = token
     elif username and passwd:
+        logr.debug( f'Login using usr/pwd from params' )
         params[ 'basic_auth' ] = ( username, passwd )
     else:
         # attempt to get username & passwd from netrc file
@@ -30,15 +33,18 @@ def jira_login( token=None, username=None, passwd=None ):
         # if "account" is defined, assume it is a Personal Access Token
         # prefer token over username/passwd
         if account:
+            logr.info( f"Using token from .netrc" )
+            logr.debug( f"Got token '{account}' from .netrc" )
             params[ 'token_auth' ] = account
         else:
+            logr.debug( f'Login using usr/pwd from .netrc' )
             params[ 'basic_auth' ] = ( login, pwd )
     try:
         raw_connection = jira.JIRA( **params )
     except jira.exceptions.JIRAError as e:
+        logr.debug( f"Caught error:\n{e}" )
         if e.status_code != 401:
             raise e
-    # return jira_connection.Jira_Connection( raw_connection )
     return raw_connection
 
 

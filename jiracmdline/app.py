@@ -5,6 +5,14 @@ import libweb
 import os
 import secrets
 import user
+import logging
+
+logfmt = '%(levelname)s:%(funcName)s[%(lineno)d] %(message)s'
+loglvl = logging.INFO
+loglvl = logging.DEBUG
+logging.basicConfig( level=loglvl, format=logfmt )
+logging.getLogger( 'libjira' ).setLevel( loglvl )
+logging.getLogger( 'jira.JIRA' ).setLevel( loglvl )
 
 app = flask.Flask( __name__ )
 app.secret_key = secrets.token_hex()
@@ -269,4 +277,4 @@ def do_summary():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run( debug=True )

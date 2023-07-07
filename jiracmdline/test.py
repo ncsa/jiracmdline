@@ -1,12 +1,14 @@
 import collections
-import jira
+import libjira
 import json
 import logging
 import pprint
 
 logfmt = '%(levelname)s:%(funcName)s[%(lineno)d] %(message)s'
 loglvl = logging.INFO
+loglvl = logging.DEBUG
 logging.basicConfig( level=loglvl, format=logfmt )
+logging.getLogger( 'libjira' ).setLevel( loglvl )
 
 Linked_Issue = collections.namedtuple(
     'Linked_Issue',
@@ -20,7 +22,7 @@ def get_jira():
     try:
         j = resources[key]
     except KeyError:
-        j = jira.JIRA( server=f'https://{JIRA_SERVER}' )
+        j = libjira.jira_login()
     return j
 
 
