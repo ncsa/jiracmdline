@@ -9,14 +9,16 @@ import logging
 
 logfmt = '%(levelname)s:%(funcName)s[%(lineno)d] %(message)s'
 loglvl = logging.INFO
-loglvl = logging.DEBUG
+# loglvl = logging.DEBUG
 logging.basicConfig( level=loglvl, format=logfmt )
 logging.getLogger( 'libjira' ).setLevel( loglvl )
 logging.getLogger( 'jira.JIRA' ).setLevel( loglvl )
 
 app = flask.Flask( __name__ )
 app.secret_key = secrets.token_hex()
-# Tell flask_login to put "next" in the session instead of GET args
+if loglvl == logging.DEBUG:
+    app.debug = True
+# Tell flask_login to put "next" in the session, instead of, in the args to GET
 app.config['USE_SESSION_FOR_NEXT'] = True
 login_manager = flask_login.LoginManager( app=app )
 login_manager.login_view = "login"
@@ -277,4 +279,4 @@ def do_summary():
 
 
 if __name__ == '__main__':
-    app.run( debug=True )
+    app.run()
