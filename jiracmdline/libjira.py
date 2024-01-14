@@ -39,6 +39,7 @@ def jira_login( token=None, username=None, passwd=None ):
         else:
             logr.debug( f'Login using usr/pwd from .netrc' )
             params[ 'basic_auth' ] = ( login, pwd )
+    raw_connection = None
     try:
         raw_connection = jira.JIRA( **params )
     except jira.exceptions.JIRAError as e:
