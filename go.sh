@@ -2,15 +2,9 @@ DEBUG=1
 REGISTRY=ghcr.io
 REPO=ncsa/jiracmdline
 
-function latest_tag {
-  [[ "$DEBUG" -eq 1 ]] && set -x
-  # echo "production"
-  echo "bind_localhost_only"
-}
-
 [[ "$DEBUG" -eq 1 ]] && set -x
 
-tag=$(latest_tag)
+tag=production
 
 docker run -it --pull always \
 --mount type=bind,src=$HOME,dst=/home \
