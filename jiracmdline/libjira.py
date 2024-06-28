@@ -10,11 +10,12 @@ logr = logging.getLogger( __name__ )
 resources = {}
 
 
-def jira_login( token=None, username=None, passwd=None ):
-    try:
-        jira_server = os.environ[ 'JIRA_SERVER' ]
-    except KeyError as e:
-        raise UserWarning( 'Jira Server missing. Set JIRA_SERVER environment variable' )
+def jira_login( token=None, jira_server=None, username=None, passwd=None ):
+    if not jira_server:
+        try:
+            jira_server = os.environ[ 'JIRA_SERVER' ]
+        except KeyError as e:
+            raise UserWarning( 'Jira Server missing. Set JIRA_SERVER environment variable' )
     params = {
         'server': f'https://{jira_server}',
         'validate': True,
