@@ -61,9 +61,11 @@ class Jira_Connection( object ):
     @staticmethod
     def get_epic_key( issue ) :
         ''' Epic that this issue is a part of
+            In jira, this is customfield "Epic Link" and is unique per instance
         '''
         try:
-            key = issue.fields.customfield_10536
+            # key = issue.fields.customfield_10536 #jira-old
+            key = issue.fields.customfield_10102
         except AttributeError:
             key = None
         return key
@@ -73,9 +75,11 @@ class Jira_Connection( object ):
     def get_epic_name( issue ) :
         ''' The name of the epic. Assumes "issue" is an epic.
             If "issue" is not an epic, return None.
+            In jira, this is customfield "Epic Name" and is unique per instance
         '''
         try:
-            name = issue.fields.customfield_10537
+            # name = issue.fields.customfield_10537 #jira-old
+            name = issue.fields.customfield_10104
         except AttributeError:
             name = None
         return name

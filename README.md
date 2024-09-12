@@ -58,22 +58,8 @@ bash ./go_jira.sh
 ```
 
 # Dev Setup
-1. Start Docker container
-```
-git clone https://github.com/ncsa/jiracmdline
-cd jiracmdline
-./go.sh
-# now inside container
-cd /home/working/jiracmdline
-./devsetup.sh
-```
-1. Run test (inside Docker container)
-```
-cd /home/working/jiracmdline
-./run.sh test.py
-```
-1. Run live iPython notebook (inside Docker container)
-```
-cd /home/working/jiracmdline
-./jirashell.sh
+1. `git clone https://github.com/ncsa/jiracmdline`
+1. `cd jiracmdline`
+1. `docker compose -f build.yaml`
+1. Browse to http://localhost:8080/
 ```

@@ -8,14 +8,14 @@ import pprint
 class Sprint:
     ''' Python representation of a Sprint '''
     id: str
-    rapidViewId: int
+    # rapidViewId: int #these might be null, not using it anywhere yet
     state: str
     name: str
     startDate: str
     endDate: str
     completeDate: str
     activatedDate: str
-    sequence: int
+    # sequence: int #might be null, not using it anywhere yet
     goal: str
     autoStartStop: bool
 
@@ -37,7 +37,10 @@ def get_active_sprint_name( issue ):
 
 
 def get_sprint_memberships( issue ):
-    memberships = issue.fields.customfield_10535
+    ''' In Jira, this customfield is named "Sprint" and is unique per instance
+    '''
+    # memberships = issue.fields.customfield_10535 #jira-old
+    memberships = issue.fields.customfield_10101
     sprints = []
     if memberships:
         for line in memberships:
@@ -46,7 +49,7 @@ def get_sprint_memberships( issue ):
 
 
 def _str_to_sprint( line ):
-    ''' Parse a line from customfield_10535
+    ''' Parse a line from customfield "Sprint"
         return an instance of a Sprint
     '''
     if not line.startswith( 'com.atlassian.greenhopper.service.sprint.Sprint' ):
