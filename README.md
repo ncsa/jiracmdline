@@ -60,6 +60,9 @@ bash ./go_jira.sh
 # Dev Setup
 1. `git clone https://github.com/ncsa/jiracmdline`
 1. `cd jiracmdline`
-1. `docker compose -f build.yaml`
-1. Browse to http://localhost:8080/
-```
+1. `make dev`
+   1. `cd /home/LOCATION/OF/JIRACMDLINE/REPO`
+   1. `bash scripts/netrc.sh`
+   1. `cd jiracmdline`
+   1. `flask run --debug`
+1. Browse to http://localhost:5000/

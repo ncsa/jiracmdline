@@ -77,6 +77,11 @@ class simple_issue:
         x, y = self.key.split( sep='-', maxsplit=1 )
         return (x, int(y) )
 
+
+    def __hash__( self ):
+        return hash( (self.due, self.key_parts()) )
+
+
     def __eq__( self, other ):
         if isinstance( other, simple_issue ):
             return (self.due, self.key_parts()) == (other.due, other.key_parts())

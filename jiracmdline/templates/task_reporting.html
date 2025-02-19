@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% import 'macros.html' as m %}
+{% block title %}Task Tracking{% endblock title %}
+{% block content %}
+  <h1>Task Tracking</h1>
+  {% if projects %}
+  <h2>Project Effort Report for
+    {{ startdate.strftime( "%Y-%m-%d" ) }} -
+    {{ enddate.strftime( "%Y-%m-%d" ) }}</h2>
+  <p>
+    <table>
+      <tr>
+        <th>Project</th>
+        <th>Users</th>
+        <th>Tickets</th>
+      </tr>
+    {% for pname, p in projects | dictsort %}
+      <tr>
+        <td><b>{{ pname }}</b><br/>
+          Total: {{ p.total_hours() }} h</td>
+        <td>
+          <table class="borderless">
+          {% for u, effort in p.user_effort(days) | dictsort %}
+            <tr class="borderless">
+              <td class="borderless">{{u}}:</td>
+              <td class="borderless">{{ effort | round(1,'ceil') }} %</td>
+            </tr>
+          {% endfor %}
+          </table>
+        </td>
+        <td>
+          <button type="button" class="collapsible">expand</button>
+          <p class="content">
+            {% for t, hours in p.ticket_hours().items() %}
+            {{ "%04.2f"|format(hours) }} h
+            <a href="{{t.url}}">{{t.key}}</a> {{t.summary}}<br/>
+            {% endfor %}
+          </p>
+        </td>
+      </tr>
+    {% endfor %}
+    </table>
+  </p>
+  {% else %}
+  <h3>Filter Selection</h3>
+  <p>
+    <form method="get">
+      <table>
+        <tr>
+          <td>
+            <label for="group">Org Group</label>
+          </td>
+          <td>
+            <input
+              name="group"
+              type="text"
+              size="30"
+              placeholder="Examples: org_sp org_cs org_irst"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Timeframe
+          </td>
+          <td>
+            <input
+              name="timeframe"
+              type="radio"
+              value="thismonth"
+              checked
+            />
+            <label for="timeframe">This month</label></br>
+
+            <input
+              name="timeframe"
+              type="radio"
+              value="lastmonth"
+            />
+            <label for="timeframe">Last month</label></br>
+          </td>
+        </tr>
+      </table>
+      <input type="submit">
+    </form>
+  </p>
+  {% endif %}
+{% endblock content %}

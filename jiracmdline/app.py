@@ -7,6 +7,8 @@ import secrets
 import user
 import logging
 
+import pprint
+
 logfmt = '%(levelname)s:%(funcName)s[%(lineno)d] %(message)s'
 loglvl = logging.INFO
 # loglvl = logging.DEBUG
@@ -274,6 +276,35 @@ def do_summary():
             data['errors'] = [ str( e ) ]
     return flask.render_template(
         'summary.html',
+        **data,
+    )
+
+
+@app.route( '/task_reporting' )
+@flask_login.login_required
+def do_task_tracking():
+    import task_report
+    session_update()
+    valid_params=[ 'group', 'projects', 'timeframe' ]
+    params = {}
+    data = {}
+    try:
+        for k in valid_params:
+            if k in flask.request.args:
+                params[k] = flask.request.args[k]
+        # params = { k:flask.request.args[k] for k in valid_params }
+        # pprint.pprint( params )
+    except KeyError as e:
+        raise e
+        params = {}
+    if params:
+        params['current_user'] = flask_login.current_user
+        try:
+            data = task_report.run( **params )
+        except UserWarning as e:
+            data[ 'errors' ] = e.args
+    return flask.render_template(
+        'task_reporting.html',
         **data,
     )
 

@@ -4,4 +4,6 @@ flask-login
 gunicorn
 jira
 keyring
+pandas
+python-dateutil
 tabulate

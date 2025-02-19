@@ -8,6 +8,9 @@ run:
 	docker compose pull
 	docker compose up
 
+dev:
+	bash dev.sh
+
 # cmdline-build:
 # 	docker-compose -f build.yaml build
 # 	docker-compose -f build.yaml run gunicorn_project bash

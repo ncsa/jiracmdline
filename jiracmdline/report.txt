@@ -1,0 +1,266 @@
+ARGS: 'Namespace(debug=False, verbose=False, groups=['org_sp'], thismonth=False, lastmonth=False, start=None, end=None, startdate=datetime.datetime(2025, 2, 1, 0, 0), enddate=datetime.datetime(2025, 2, 28, 0, 0), output_format='text')'
+JQL: 'worklogauthor in (membersOf("org_sp")) AND worklogdate > "2025-02-01" AND worklogdate < "2025-03-01"'
+Add: Radiant SVCPLAN-7157, jhaney 3600
+Add: Radiant SVCPLAN-7151, bsper2 5400
+Add: Radiant SVCPLAN-7151, jhaney 21600
+Add: mForge SVCPLAN-7146, bsper2 3600
+Add: mForge SVCPLAN-7146, bsper2 7200
+Add: Delta SVCPLAN-7144, tbouvet 18000
+Add: Delta SVCPLAN-7144, tbouvet 10800
+Add: Delta SVCPLAN-7144, tbouvet 7200
+Add: Radiant SVCPLAN-7141, bsper2 90
+Add: Radiant SVCPLAN-7141, bsper2 3600
+Add: Radiant SVCPLAN-7141, bsper2 1800
+Add: ISF SVCPLAN-7140, pttran3 1800
+Add: Radiant SVCPLAN-7139, bsper2 1800
+Add: Monitoring and Metrics SVCPLAN-7137, bsper2 1800
+Add: Monitoring and Metrics SVCPLAN-7137, bsper2 3600
+Add: ISF SVCPLAN-7135, pttran3 7200
+Add: ISF SVCPLAN-7135, pttran3 7200
+Add: ISF SVCPLAN-7132, aloftus 7200
+Add: ISF SVCPLAN-7132, aloftus 1800
+Add: Illinois Computes SVCPLAN-7124, pttran3 9000
+Add: Illinois Computes SVCPLAN-7116, jhaney 5400
+Add: Radiant SVCPLAN-7115, jhaney 3600
+Add: ISF SVCPLAN-7114, tbouvet 7200
+Add: ISF SVCPLAN-7113, tbouvet 10800
+Add: ISF SVCPLAN-7113, tbouvet 3600
+Add: ISF SVCPLAN-7112, tbouvet 10800
+Add: ISF SVCPLAN-7112, tbouvet 3600
+Add: ISF SVCPLAN-7111, tbouvet 14400
+Add: ISF SVCPLAN-7102, aloftus 7200
+Add: ISF SVCPLAN-7102, aloftus 7200
+Add: ISF SVCPLAN-7102, aloftus 7200
+Add: ISF SVCPLAN-7102, aloftus 3600
+Add: ISF SVCPLAN-7085, tbouvet 28800
+Add: ISF SVCPLAN-7079, cpitcel 16200
+Add: ISF SVCPLAN-7073, aloftus 1200
+Add: ISF SVCPLAN-7071, aloftus 5400
+Add: mForge SVCPLAN-7069, bsper2 1800
+Add: ISF SVCPLAN-7062, aloftus 1800
+Add: ISF SVCPLAN-7058, cpitcel 18000
+Add: ISF SVCPLAN-7054, aloftus 5400
+Add: ISF SVCPLAN-7053, cpitcel 3600
+Add: ISF SVCPLAN-7050, aloftus 3600
+Add: ISF SVCPLAN-7047, aloftus 9000
+Add: ISF SVCPLAN-7047, aloftus 1800
+Add: ISF SVCPLAN-7046, aloftus 3600
+Add: ISF SVCPLAN-7046, aloftus 5400
+Add: ISF SVCPLAN-7043, aloftus 3600
+Add: ISF SVCPLAN-7042, aloftus 7200
+Add: ISF SVCPLAN-7042, pttran3 3600
+Add: Illinois Campus Cluster Program (ICCP) SVCPLAN-7017, tbouvet 10800
+Add: ISF SVCPLAN-7014, tbouvet 7200
+Add: ISF SVCPLAN-7012, tbouvet 10800
+Add: Monitoring and Metrics SVCPLAN-7004, bsper2 5400
+Add: Monitoring and Metrics SVCPLAN-7004, bsper2 3600
+Add: ACCESS SVCPLAN-6992, aloftus 7200
+Add: Illinois Campus Cluster Program (ICCP) SVCPLAN-6990, tbouvet 28800
+Add: ISF SVCPLAN-6989, aloftus 7200
+Add: ISF SVCPLAN-6989, aloftus 5400
+Add: ISF SVCPLAN-6953, aloftus 10800
+Add: ISF SVCPLAN-6953, aloftus 1800
+Add: ISF SVCPLAN-6953, aloftus 3600
+Add: ISF SVCPLAN-6953, aloftus 12600
+Add: ACCESS SVCPLAN-6948, jhaney 16200
+Add: ACCESS SVCPLAN-6948, jhaney 3600
+Add: ACCESS SVCPLAN-6948, jhaney 7200
+Add: isl-cluster SVCPLAN-6944, yanzhan2 1800
+Add: Nightingale SVCPLAN-6894, bsper2 900
+Add: Illinois Campus Cluster Program (ICCP) SVCPLAN-6793, tbouvet 144000
+Add: ISF SVCPLAN-6776, cpitcel 9000
+Add: ISF SVCPLAN-6776, aloftus 10800
+Add: ISF SVCPLAN-6776, aloftus 1800
+Add: ISF SVCPLAN-6775, aloftus 5400
+Add: ISF SVCPLAN-6775, aloftus 3600
+Add: ISF SVCPLAN-6775, aloftus 9000
+Add: Illinois Campus Cluster Program (ICCP) SVCPLAN-6660, tbouvet 432000
+Add: Nightingale SVCPLAN-6093, bsper2 900
+Add: Radiant SVCPLAN-5138, bsper2 5400
+Add: ISF SVCPLAN-449, aloftus 300
+Add: ISF SVCPLAN-423, aloftus 300
+Add: Nightingale SUP-10848, bsper2 1800
+Add: Nightingale SUP-10846, bsper2 3600
+Add: Delta SUP-10701, yanzhan2 7200
+Add: ISF SUP-10628, aloftus 10800
+Add: Innovative Systems Lab SUP-10565, tbouvet 10800
+Add: Boneyard SUP-10560, tbouvet 14400
+Add: Boneyard SUP-10560, tbouvet 7200
+Add: HTC SUP-10492, tbouvet 28800
+Add: Nightingale SUP-10471, bsper2 600
+Add: Nightingale SUP-10468, bsper2 1800
+Add: Nightingale SUP-10465, bsper2 900
+Add: ISF SUP-10406, aloftus 3600
+Add: ISF SUP-10406, aloftus 900
+Add: ISF SUP-10311, aloftus 1800
+Add: mForge MNIP-5813, bsper2 1800
+Add: mForge MNIP-5764, bsper2 3600
+Add: Delta DELTA-5186, yanzhan2 10800
+=================================================
+Report for 2025-02-01 - 2025-02-28 (20 work days)
+=================================================
+
+-------
+Radiant
+-------
+TOTAL: 13.25h
+	Tickets
+		SVCPLAN-7157: 1.0h
+		SVCPLAN-7151: 7.5h
+		SVCPLAN-7141: 1.75h
+		SVCPLAN-7139: 0.5h
+		SVCPLAN-7115: 1.0h
+		SVCPLAN-5138: 1.5h
+	Users
+		jhaney: 6.25 %
+		bsper2: 3.92578125 %
+------
+mForge
+------
+TOTAL: 5.0h
+	Tickets
+		SVCPLAN-7146: 3.0h
+		SVCPLAN-7069: 0.5h
+		MNIP-5813: 0.5h
+		MNIP-5764: 1.0h
+	Users
+		bsper2: 3.90625 %
+-----
+Delta
+-----
+TOTAL: 15.0h
+	Tickets
+		SVCPLAN-7144: 10.0h
+		SUP-10701: 2.0h
+		DELTA-5186: 3.0h
+	Users
+		tbouvet: 7.8125 %
+		yanzhan2: 3.90625 %
+---
+ISF
+---
+TOTAL: 93.25h
+	Tickets
+		SVCPLAN-7140: 0.5h
+		SVCPLAN-7135: 4.0h
+		SVCPLAN-7132: 2.5h
+		SVCPLAN-7114: 2.0h
+		SVCPLAN-7113: 4.0h
+		SVCPLAN-7112: 4.0h
+		SVCPLAN-7111: 4.0h
+		SVCPLAN-7102: 7.0h
+		SVCPLAN-7085: 8.0h
+		SVCPLAN-7079: 4.5h
+		SVCPLAN-7073: 0.5h
+		SVCPLAN-7071: 1.5h
+		SVCPLAN-7062: 0.5h
+		SVCPLAN-7058: 5.0h
+		SVCPLAN-7054: 1.5h
+		SVCPLAN-7053: 1.0h
+		SVCPLAN-7050: 1.0h
+		SVCPLAN-7047: 3.0h
+		SVCPLAN-7046: 2.5h
+		SVCPLAN-7043: 1.0h
+		SVCPLAN-7042: 3.0h
+		SVCPLAN-7014: 2.0h
+		SVCPLAN-7012: 3.0h
+		SVCPLAN-6989: 3.5h
+		SVCPLAN-6953: 8.0h
+		SVCPLAN-6776: 6.0h
+		SVCPLAN-6775: 5.0h
+		SVCPLAN-449: 0.25h
+		SVCPLAN-423: 0.25h
+		SUP-10628: 3.0h
+		SUP-10406: 1.25h
+		SUP-10311: 0.5h
+	Users
+		pttran3: 4.296875 %
+		aloftus: 37.3046875 %
+		tbouvet: 21.09375 %
+		cpitcel: 10.15625 %
+----------------------
+Monitoring and Metrics
+----------------------
+TOTAL: 4.0h
+	Tickets
+		SVCPLAN-7137: 1.5h
+		SVCPLAN-7004: 2.5h
+	Users
+		bsper2: 3.125 %
+-----------------
+Illinois Computes
+-----------------
+TOTAL: 4.0h
+	Tickets
+		SVCPLAN-7124: 2.5h
+		SVCPLAN-7116: 1.5h
+	Users
+		pttran3: 1.953125 %
+		jhaney: 1.171875 %
+--------------------------------------
+Illinois Campus Cluster Program (ICCP)
+--------------------------------------
+TOTAL: 171.0h
+	Tickets
+		SVCPLAN-7017: 3.0h
+		SVCPLAN-6990: 8.0h
+		SVCPLAN-6793: 40.0h
+		SVCPLAN-6660: 120.0h
+	Users
+		tbouvet: 133.59375 %
+------
+ACCESS
+------
+TOTAL: 9.5h
+	Tickets
+		SVCPLAN-6992: 2.0h
+		SVCPLAN-6948: 7.5h
+	Users
+		aloftus: 1.5625 %
+		jhaney: 5.859375 %
+-----------
+isl-cluster
+-----------
+TOTAL: 0.5h
+	Tickets
+		SVCPLAN-6944: 0.5h
+	Users
+		yanzhan2: 0.390625 %
+-----------
+Nightingale
+-----------
+TOTAL: 3.0h
+	Tickets
+		SVCPLAN-6894: 0.25h
+		SVCPLAN-6093: 0.25h
+		SUP-10848: 0.5h
+		SUP-10846: 1.0h
+		SUP-10471: 0.25h
+		SUP-10468: 0.5h
+		SUP-10465: 0.25h
+	Users
+		bsper2: 2.2786458333333335 %
+----------------------
+Innovative Systems Lab
+----------------------
+TOTAL: 3.0h
+	Tickets
+		SUP-10565: 3.0h
+	Users
+		tbouvet: 2.34375 %
+--------
+Boneyard
+--------
+TOTAL: 6.0h
+	Tickets
+		SUP-10560: 6.0h
+	Users
+		tbouvet: 4.6875 %
+---
+HTC
+---
+TOTAL: 8.0h
+	Tickets
+		SUP-10492: 8.0h
+	Users
+		tbouvet: 6.25 %
