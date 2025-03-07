@@ -2,6 +2,7 @@
 *.cfg
 *.dump
 *.out
+*.raw.js
 TODO
 output
 

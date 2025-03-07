@@ -13,7 +13,7 @@ import libweb
 import logging
 import math
 import pandas as pd
-import pprint
+# import pprint
 
 
 class ProjectEffort:
@@ -55,6 +55,18 @@ class ProjectEffort:
             for u, secs in u_data.items():
                 table.append( [ self.name, t, u, secs ] )
         return table
+
+    def urls_for_all_tickets( self ):
+        urls = {}
+        servers = defaultdict( list )
+        for t in self.tickets:
+            sname = t.server_url
+            servers[ sname ].append( t )
+        for s, tickets in servers.items():
+            keys = ','.join( [ t.key for t in tickets ] )
+            s_name = s[8:]
+            urls[s_name] = f"{s}/issues/?jql=key%20in%20({keys})"
+        return urls
 
     @staticmethod
     def s2h( seconds ):
@@ -102,7 +114,6 @@ def get_args( params=None ):
             'Defaults to --thismonth' )
         date_group = date_mutex.add_mutually_exclusive_group()
         date_group.add_argument( '--timeframe',
-            default='thismonth',
             help=argparse.SUPPRESS )
         date_group.add_argument( '--thismonth',
             dest='timeframe',
@@ -136,19 +147,19 @@ def get_args( params=None ):
             raise UserWarning( "No groups specified. Must have at least one" )
             # error( "No groups specified. Must have at least one" )
         # Process start, end dates
-        if args.start:
-            args.startdate = dateutil.parser.parse( args.start )
-            unused, args.enddate = get_month_bounds(0)
-            if args.end:
-                args.enddate = dateutil.parser.parse( args.end )
-        elif args.timeframe == 'lastmonth':
+        args.startdate, args.enddate = get_month_bounds(0) # default to thismonth
+        if args.timeframe == 'lastmonth':
             args.startdate, args.enddate = get_month_bounds(-1)
-        else:
-            # default to thismonth
-            args.startdate, args.enddate = get_month_bounds(0)
+        elif args.start:
+            args.startdate = dateutil.parser.parse( args.start, ignoretz=True ).date()
+            # unused, args.enddate = get_month_bounds(0)
+            if args.end:
+                args.enddate = dateutil.parser.parse( args.end, ignoretz=True ).date()
         if args.startdate > args.enddate:
-            raise UserWarning( f"Startdate '{args.startdate}' cannot be > Enddate '{args.enddate}'" )
-            # error( f"Startdate '{args.startdate}' cannot be > Enddate '{args.enddate}'" )
+            raise UserWarning(
+                f"""Startdate '{args.startdate}' cannot be earlier
+                than Enddate '{args.enddate}'"""
+                )
         resources[key] = args
     return resources[key]
 
@@ -160,10 +171,15 @@ def get_month_bounds( offset=0 ):
     today = datetime.date.today()
     yr_offset = int( offset / 12 )
     mo_offset = offset % 12
+    if offset < 0:
+        #can't get modulo of a negative number, so fix mo_offset
+        mo_offset = ( abs( offset ) % 12 ) * -1
     yr = today.year + yr_offset
     mo = today.month + mo_offset
-    first_day = datetime.datetime( yr, mo, 1 )
-    last_day = datetime.datetime( yr, mo, monthrange( yr, mo)[1] )
+    # pprint.pprint( [ offset, yr_offset, mo_offset, yr, mo ] )
+    first_day = datetime.date( yr, mo, 1 )
+    last_day = datetime.date( yr, mo, monthrange( yr, mo )[1] )
+    # print( f"first_day {first_day} last_day {last_day} " )
     return first_day, last_day
 
 
@@ -193,9 +209,10 @@ def mk_jql():
     args = get_args()
     # process groups
     membersof = ','.join( [ f'membersOf("{g}")' for g in args.groups ] )
-    startdate = args.startdate.strftime( '%Y-%m-%d' )
-    end = args.enddate + datetime.timedelta( days=1 )
-    enddate = end.strftime( '%Y-%m-%d' )
+    # adjust dates for JQl formatting
+    oneday = datetime.timedelta( days=1 )
+    startdate = ( args.startdate - oneday ).strftime( '%Y-%m-%d' )
+    enddate = ( args.enddate + oneday ).strftime( '%Y-%m-%d' )
     # construct JQL
     author = f'worklogauthor in ({membersof})'
     start = f'worklogdate > "{startdate}"'
@@ -253,13 +270,13 @@ def issue2program( issue ):
     research_system = issue.fields.customfield_10409
     if prj in jira_projects:
         program = jira_projects[ prj ]
+    elif prog_serv:
+        program = prog_serv[0].value
     elif research_system:
         # if mapping exists, use it, otherwise, use raw value
         program = research_system[0].value
         if program in research_systems:
             program = research_systems[program]
-    elif prog_serv:
-        program = prog_serv[0].value
     else:
         raise UserWarning( f'No program for issue {issue}' )
     # pprint.pprint( f"Found program: {program}" )
@@ -268,6 +285,8 @@ def issue2program( issue ):
 
 def num_workdays(start_date, end_date, holidays=[]):
     """Return the number of workdays between two dates, excluding given holidays."""
+    # # to make this inclusive, have to modify end_date by 1
+    # end = end_date + datetime.timedelta( days=1 )
     workdays = pd.bdate_range(start=start_date, end=end_date, freq='B')
     # pprint.pprint( workdays )
     return len([day for day in workdays if day not in holidays])
@@ -330,7 +349,7 @@ def run( current_user=None, **kwargs ):
     # get number of workdays covered in the date range
     holidays = [] #TODO read these in from some other source
     days = num_workdays( args.startdate, args.enddate, holidays )
-    # print( f'Workdays: {days}' )
+    # print( f'Workdays: {days}\n' )
     # raise SystemExit()
 
     # make jql
@@ -348,15 +367,27 @@ def run( current_user=None, **kwargs ):
     projects = {}
     for i in issues:
         # pprint.pprint( [ 'ISSUE', i ] )
-        program = issue2program( i )
+        try:
+            program = issue2program( i )
+        except UserWarning as e:
+            error( e )
+            continue
         project = projects.setdefault( program, ProjectEffort(program) )
         worklogs = current_user.worklogs( i )
         si = simple_issue.from_src( src=i, jcon=current_user )
         for w in worklogs:
-            author = w.author.name
-            secs = w.timeSpentSeconds
-            project.add_worklog( ticket=si, user=author, secs=secs )
+            # pprint.pprint( w.raw )
+            w_started = dateutil.parser.parse( w.started, ignoretz=True ).date()
+            # print( f'{args.startdate} < {w_started} < {args.enddate} ??' )
+            if w_started >= args.startdate and w_started <= args.enddate:
+                # print( '---YES---' )
+                author = w.author.name
+                secs = w.timeSpentSeconds
+                project.add_worklog( ticket=si, user=author, secs=secs )
+        # raise UserWarning( 'Debug worklog' )
 
+    if len( projects ) < 1:
+        warn( f'no worklogs found' )
 
     if args.output_format == 'text':
         print_report( projects, days )
@@ -366,6 +397,8 @@ def run( current_user=None, **kwargs ):
         return {
             'projects': projects,
             'days': days,
+            'group': args.group,
+            'timeframe': args.timeframe,
             'startdate': args.startdate,
             'enddate': args.enddate,
             'errors': get_errors(),

@@ -11,6 +11,7 @@ class simple_issue:
     key: str = ''
     issue_type: str = ''
     summary: str = ''
+    server_url: str = dataclasses.field(repr=False, default='')
     story: str = dataclasses.field(repr=False, default='')
     child: str = dataclasses.field(repr=False, default='')
     due: str = dataclasses.field(repr=False, default='')
@@ -57,6 +58,7 @@ class simple_issue:
         params['summary'] = src.fields.summary[0:50]
         params['url'] = f'{jcon.server_url}/browse/{src.key}'
         params['key'] = src.key
+        params['server_url'] = jcon.server_url
         # can an epic belong to itself?
         params['epic'] = jcon.get_epic_key( src )
         params['epic_name'] = jcon.get_epic_name( src )
@@ -70,6 +72,7 @@ class simple_issue:
                 link_text = link.link_type.outward
             params['links'].append( f'{link_text} {link.remote_issue.key}' )
         return cls( **params )
+
 
     def key_parts( self ):
         '''Split the key into string and numeric parts to enable better sorting

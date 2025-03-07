@@ -285,7 +285,7 @@ def do_summary():
 def do_task_tracking():
     import task_report
     session_update()
-    valid_params=[ 'group', 'projects', 'timeframe' ]
+    valid_params=[ 'group', 'projects', 'timeframe', 'start', 'end' ]
     params = {}
     data = {}
     try:

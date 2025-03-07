@@ -4,9 +4,14 @@
 {% block content %}
   <h1>Task Tracking</h1>
   {% if projects %}
-  <h2>Project Effort Report for
-    {{ startdate.strftime( "%Y-%m-%d" ) }} -
-    {{ enddate.strftime( "%Y-%m-%d" ) }}</h2>
+  <h2>Project Report for <i>{{ group }}</i>
+    {% if timeframe %}
+      {{ startdate.strftime( "%b %Y" ) }}
+    {% else %}
+      {{ startdate.strftime( "%d %b %Y" ) }} -
+      {{ enddate.strftime( "%d %b %Y" ) }}
+    {% endif %}
+  </h2>
   <p>
     <table>
       <tr>
@@ -35,6 +40,10 @@
             {{ "%04.2f"|format(hours) }} h
             <a href="{{t.url}}">{{t.key}}</a> {{t.summary}}<br/>
             {% endfor %}
+            <br/>
+            {% for server, url in p.urls_for_all_tickets().items() %}
+            <a href="{{url}}">See all at {{server}}</a><br/>
+            {% endfor %}
           </p>
         </td>
       </tr>
@@ -55,7 +64,11 @@
               name="group"
               type="text"
               size="30"
+              {% if group %}
+              value="{{ group }}"
+              {% else %}
               placeholder="Examples: org_sp org_cs org_irst"
+              {% endif %}
             />
           </td>
         </tr>
@@ -68,7 +81,9 @@
               name="timeframe"
               type="radio"
               value="thismonth"
+              {% if timeframe == "thismonth" %}
               checked
+              {% endif %}
             />
             <label for="timeframe">This month</label></br>
 
@@ -76,6 +91,9 @@
               name="timeframe"
               type="radio"
               value="lastmonth"
+              {% if timeframe == "lastmonth" %}
+              checked
+              {% endif %}
             />
             <label for="timeframe">Last month</label></br>
           </td>
