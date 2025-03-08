@@ -78,7 +78,7 @@ def mk_summaries( text ):
 
 def run( current_user=None, **kwargs ):
     if not current_user:
-        raise UserWarning( "needs updates yet for cmdline" )
+        raise UserWarning( "cmdline not implemented" )
     else:
         reset()
         parts = libweb.process_kwargs( kwargs )
