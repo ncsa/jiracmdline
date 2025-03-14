@@ -285,7 +285,7 @@ def do_summary():
 def do_task_tracking():
     import task_report
     session_update()
-    valid_params=[ 'group', 'projects', 'timeframe', 'start', 'end' ]
+    valid_params=[ 'group', 'timeframe', 'start', 'end' ]
     params = {}
     data = {}
     try:
@@ -305,6 +305,25 @@ def do_task_tracking():
             data[ 'errors' ] = e.args
     return flask.render_template(
         'task_reporting.html',
+        **data,
+    )
+
+
+@app.route( '/mywork' )
+@flask_login.login_required
+def do_mywork():
+    import mywork
+    session_update()
+    valid_params = []
+    params = {}
+    data = {}
+    params['current_user'] = flask_login.current_user
+    try:
+        data = mywork.run( **params )
+    except UserWarning as e:
+        data[ 'errors' ] = e.args
+    return flask.render_template(
+        'mywork.html',
         **data,
     )
 

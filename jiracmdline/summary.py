@@ -1,10 +1,13 @@
 #!/usr/local/bin/python3
 
 import argparse
+import libjira
 import jira.exceptions
+import jira_connection
 import libweb
 import logging
 from simple_issue import simple_issue
+import pprint
 
 # Module level resources
 logr = logging.getLogger( __name__ )
@@ -70,8 +73,10 @@ def warn( msg ):
 
 
 def run( current_user=None, **kwargs ):
+    parts = None
     if not current_user:
-        raise UserWarning( "needs updates yet for cmdline" )
+        # raise UserWarning( "needs updates yet for cmdline" )
+        current_user = jira_connection.Jira_Connection( libjira.jira_login() )
     else:
         reset()
         parts = libweb.process_kwargs( kwargs )
@@ -86,6 +91,8 @@ def run( current_user=None, **kwargs ):
     for key in args.issues:
         try:
             i = current_user.get_issue_by_key( key )
+            # pprint.pprint( i.raw )
+            # raise SystemExit("DEBUG  STOP")
         except jira.exceptions.JIRAError as e:
             raise UserWarning( e.text )
 
@@ -134,7 +141,7 @@ if __name__ == '__main__':
 
     # configure logging
     loglvl = logging.WARNING
-    if args.verbose or args.dryrun:
+    if args.verbose:
         loglvl = logging.INFO
     if args.debug:
         loglvl = logging.DEBUG

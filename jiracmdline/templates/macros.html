@@ -19,3 +19,44 @@
     {% endfor %}
   </tr>
 {%- endmacro %}
+
+
+
+{% macro project_effort( projects, days ) -%}
+  <table>
+    <tr>
+      <th>Project</th>
+      <th>Users</th>
+      <th>Tickets</th>
+    </tr>
+  {% for pname, p in projects | dictsort %}
+    <tr>
+      <td><b>{{ pname }}</b><br/>
+        Total: {{ p.total_hours() }} h</td>
+      <td>
+        <table class="borderless">
+        {% for u, effort in p.user_effort(days) | dictsort %}
+          <tr class="borderless">
+            <td class="borderless">{{u}}:</td>
+            <td class="borderless">{{ effort | round(1,'ceil') }} %</td>
+          </tr>
+        {% endfor %}
+        </table>
+      </td>
+      <td>
+        <button type="button" class="collapsible">expand</button>
+        <p class="content">
+          {% for t, hours in p.ticket_hours().items() %}
+          {{ "%04.2f"|format(hours) }} h
+          <a href="{{t.url}}">{{t.key}}</a> {{t.summary}}<br/>
+          {% endfor %}
+          <br/>
+          {% for server, url in p.urls_for_all_tickets().items() %}
+          <a href="{{url}}">See all at {{server}}</a><br/>
+          {% endfor %}
+        </p>
+      </td>
+    </tr>
+  {% endfor %}
+  </table>
+{%- endmacro %}

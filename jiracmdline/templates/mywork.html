@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% import 'macros.html' as m %}
+
+{% block extra_head %}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet", type="text/css", href="/static/viewport.css" />
+{% endblock extra_head %}
+
+{% block title %}My Worklogs{% endblock title %}
+
+{% block content %}
+<h1>{{ current_user.username() }}'s Worklogs</h1>
+<div class="row">
+  {% for wd in weekly_data %}
+  <div class="section">
+    <h2>
+      Effort for week of {{ wd.startdate.strftime( "%d %b %Y" ) }}
+    </h2>
+    {{ m.project_effort( wd.projects, wd.days ) }}
+  </div>
+  {% endfor %}
+</div>
+{% endblock content %}
