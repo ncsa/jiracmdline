@@ -17,6 +17,7 @@
     <h2>
       Effort for week of {{ wd.startdate.strftime( "%d %b %Y" ) }}
     </h2>
+    <p>Num days: {{ wd.days }}</p>
     {{ m.project_effort( wd.projects, wd.days ) }}
   </div>
   {% endfor %}
