@@ -165,7 +165,7 @@ if __name__ == '__main__':
     # print( ">>>PROJECTS" )
     # print_all_projects()
 
-    issue_id = 'NCSACC-1659'
+    issue_id = 'NCSACC-1655'
     # print( json.dumps( get_jira().issue(issue_id).raw ) )
     pprint.pprint( get_jira().issue(issue_id).raw )
 
