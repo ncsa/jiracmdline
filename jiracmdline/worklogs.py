@@ -55,6 +55,10 @@ def get_args( params=None ):
             choices=['text', 'csv', 'raw' ],
             default='text',
         )
+        parser.add_argument( '-n', '--num_weeks',
+            type=int,
+            default=4,
+            help='Number of weeks to report (default: %(default)s)')
         args = parser.parse_args( params )
         resources[key] = args
     return resources[key]
@@ -325,7 +329,7 @@ def run( current_user=None, **kwargs ):
     holidays = get_holidays()
 
     # get weeks to report on
-    weeks = get_week_bounds()
+    weeks = get_week_bounds( args.num_weeks )
 
     weekly_data = []
     for week in weeks:
