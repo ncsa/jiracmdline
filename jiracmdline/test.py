@@ -165,7 +165,9 @@ if __name__ == '__main__':
     # print( ">>>PROJECTS" )
     # print_all_projects()
 
-    print( json.dumps( get_jira().issue('SVCPLAN-398').raw ) )
+    issue_id = 'NCSACC-1659'
+    # print( json.dumps( get_jira().issue(issue_id).raw ) )
+    pprint.pprint( get_jira().issue(issue_id).raw )
 
     # # elems = [ f'SVCPLAN-{x}' for x in range( 289, 295 ) ]
     # elems = [ f'SVCPLAN-{x}' for x in range( 289, 292 ) ]

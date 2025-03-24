@@ -280,12 +280,12 @@ def do_summary():
     )
 
 
-@app.route( '/task_reporting' )
+@app.route( '/worklogs' )
 @flask_login.login_required
 def do_task_tracking():
-    import task_report
+    import worklogs
     session_update()
-    valid_params=[ 'group', 'timeframe', 'start', 'end' ]
+    valid_params=[ 'user', 'group', 'num_weeks' ]
     params = {}
     data = {}
     try:
@@ -297,33 +297,13 @@ def do_task_tracking():
     except KeyError as e:
         raise e
         params = {}
-    if params:
-        params['current_user'] = flask_login.current_user
-        try:
-            data = task_report.run( **params )
-        except UserWarning as e:
-            data[ 'errors' ] = e.args
-    return flask.render_template(
-        'task_reporting.html',
-        **data,
-    )
-
-
-@app.route( '/mywork' )
-@flask_login.login_required
-def do_mywork():
-    import mywork
-    session_update()
-    valid_params = []
-    params = {}
-    data = {}
     params['current_user'] = flask_login.current_user
     try:
-        data = mywork.run( **params )
+        data = worklogs.run( **params )
     except UserWarning as e:
         data[ 'errors' ] = e.args
     return flask.render_template(
-        'mywork.html',
+        'worklogs.html',
         **data,
     )
 

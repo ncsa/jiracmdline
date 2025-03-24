@@ -1,17 +1,20 @@
 #!/usr/local/bin/python3
 
-import csv
-import io
 from project_effort import ProjectEffort
 from simple_issue import simple_issue
 import argparse
 import collections
+import configparser
+import csv
 import datetime
 import dateutil
+import io
 import jira_connection
+from jira.resources import CustomFieldOption
 import libjira
 import libweb
 import logging
+import os
 import pandas as pd
 import pprint
 
@@ -26,6 +29,35 @@ resources = {}
 def reset():
     global resources
     resources = {}
+
+
+def get_args( params=None ):
+    key = 'args'
+    if key not in resources:
+        constructor_args = {
+            'formatter_class': argparse.RawDescriptionHelpFormatter,
+            'description': 'Report all worklogs for the specified user or group.',
+            'epilog': '''NETRC:
+                Jira login credentials should be stored in ~/.netrc.
+                Machine name should be hostname only.
+                ''',
+            }
+        parser = argparse.ArgumentParser( **constructor_args )
+        parser.add_argument( '-d', '--debug', action='store_true' )
+        parser.add_argument( '-v', '--verbose', action='store_true' )
+        # user/group specification
+        user_mutex = parser.add_argument_group( 'Users or Groups', 'Specify a user or a group' )
+        user_group = user_mutex.add_mutually_exclusive_group()
+        user_group.add_argument( '-u', '--user' )
+        user_group.add_argument( '-g', '--group' )
+        # output format = raw for web use
+        parser.add_argument( '-o', '--output_format',
+            choices=['text', 'csv', 'raw' ],
+            default='text',
+        )
+        args = parser.parse_args( params )
+        resources[key] = args
+    return resources[key]
 
 
 def set_current_user( val ):
@@ -43,32 +75,76 @@ def get_current_user():
     return val
 
 
-def get_holidays():
-    # TODO read in text file of holidays
-    return []
-
-
-def get_args( params=None ):
-    key = 'args'
+def get_usernames():
+    key = 'query_users'
+    users = []
     if key not in resources:
-        constructor_args = {
-            'formatter_class': argparse.RawDescriptionHelpFormatter,
-            'description': 'Report on all worklogs for the logged in user.',
-            'epilog': '''NETRC:
-                Jira login credentials should be stored in ~/.netrc.
-                Machine name should be hostname only.
-                ''',
-            }
-        parser = argparse.ArgumentParser( **constructor_args )
-        parser.add_argument( '-d', '--debug', action='store_true' )
-        parser.add_argument( '-v', '--verbose', action='store_true' )
-        # output format = raw for web use
-        parser.add_argument( '-o', '--output_format',
-            choices=['text', 'csv', 'raw' ],
-            default='text',
-        )
-        args = parser.parse_args( params )
-        resources[key] = args
+        args = get_args()
+        if args.user:
+            users = [ args.user ]
+        elif args.group:
+            users = get_current_user().group_members( args.group ).keys()
+        else:
+            users = [ get_current_user().current_user() ]
+        resources[key] = users
+    return resources[key]
+
+
+def get_config():
+    key = 'cfg'
+    if key not in resources:
+        envvar = 'JCL_CONFIG'
+        default_fn = '~/.config/jiracmdline/config.ini'
+        conf_file = os.getenv( envvar, default_fn )
+        cfg = configparser.ConfigParser( allow_no_value=True )
+        cfg.optionxform = str
+        cfg.read( conf_file )
+        resources[key] = cfg
+    return resources[key]
+
+
+def get_config_section( section_name ):
+    if section_name not in resources:
+        cfg = get_config()
+        resources[section_name] = cfg[section_name]
+    return resources[section_name]
+
+
+def get_holidays():
+    key = 'holidays'
+    section = 'holidays'
+    if key not in resources:
+        dates = []
+        try:
+            data = get_config_section(section)
+        except KeyError:
+            pass
+        else:
+            dates = [ pd.to_datetime(k) for k in data ]
+        resources[key] = dates
+    return resources[key]
+
+
+def get_issue2program_fields():
+    key = 'issue2program_fields'
+    if key not in resources:
+        resources[key] = get_config_section( key )
+    return resources[key]
+
+
+def get_issue2program_field_order():
+    key = 'issue2program_field_order'
+    if key not in resources:
+        data = get_issue2program_fields()
+        fields = [ k for k in data.keys() ]
+        resources[key] = fields
+    return resources[key]
+
+
+def get_customfield_human_name( customfield_name ):
+    key = f'{customfield_name}_human_name'
+    if key not in resources:
+        resources[key] = get_issue2program_fields()[customfield_name]
     return resources[key]
 
 
@@ -113,13 +189,14 @@ def mk_jql( week ):
     current_user = get_current_user() #instance of jira.JIRA
     if not current_user:
         raise UserWarning( 'not logged in' )
-    username = current_user.current_user()
+    usernames = [ f'"{u}"' for u in get_usernames() ]
+    users = ','.join( usernames )
     # adjust dates for JQl formatting
     oneday = datetime.timedelta( days=1 )
     startdate = ( week.start - oneday ).strftime( '%Y-%m-%d' )
     enddate = ( week.end + oneday ).strftime( '%Y-%m-%d' )
     # construct JQL
-    author = f'worklogauthor in ("{username}")'
+    author = f'worklogauthor in ({users})'
     start = f'worklogdate > "{startdate}"'
     end = f'worklogdate < "{enddate}"'
     jql = ' AND '.join( [ author, start, end ] )
@@ -129,63 +206,52 @@ def mk_jql( week ):
 
 def issue2program( issue ):
     ''' Determine what (funding) program an issue belongs to.
-        IF jira project = SVCPLAN or SUP, then try (in order):
-            customfield_10406 = "Programs and Services" in NCSA Jira
-            customfield_10409 = "Research System"
-        Otherwise, use map of jira project -> program
+        Get customfield order from config.
+        For each customfield, if a matching key is found, use that value.
+        Once a value is found, stop looking.
+        If no value found, throw an error.
+        If the issue has multiple values in the customfield, throw an error.
     '''
-	# map jira project -> program
-    jira_projects = {
-        'CIL':   'CILogon',
-        'DELTA': 'Delta',
-        'HYDRO': 'Hydro',
-        'IRC':   'Illinois Computes',
-        'ISL':   'Innovative Systems Lab',
-        'MNIP':  'mForge',
-        'NUS':   'Nightingale',
-    }
-    # map research system -> program
-    research_systems = {
-		# 'Archie': '',
-		'Boneyard': 'Innovative Systems Lab',
-		# 'Delta': 'Delta',
-		# 'DeltaAI': 'DeltaAI',
-		# 'DES': '',
-		# 'Granite': '',
-		'HAL': 'HAL',
-		'HAL-DGX': 'HAL',
-		'HTC': 'Illinois Computes',
-		# 'Hydro': '',
-		'ICRN': 'Illinois Computes',
-		'Illinois Campus Cluster': 'Illinois Campus Cluster Program (ICCP)',
-		'Illinois Campus Cluster - MWT2': 'Illinois Campus Cluster Program (ICCP)',
-		'isl-cluster': 'Innovative Systems Lab',
-		# 'Jade': '',
-		# 'Magnus': '',
-		# 'mForge': '',
-		'Overdrive': 'Innovative Systems Lab',
-		# 'Nightingale': '',
-		# 'Radiant': '',
-		# 'Taiga': '',
-		# 'TGIRails': '',
-		'vForge': 'Industry Program',
-		'Vlad': 'Innovative Systems Lab',
-    }
-    prj = issue.fields.project.key
-    prog_serv = issue.fields.customfield_10406
-    research_system = issue.fields.customfield_10409
-    if prj in jira_projects:
-        program = jira_projects[ prj ]
-    elif prog_serv:
-        program = prog_serv[0].value
-    elif research_system:
-        # if mapping exists, use it, otherwise, use raw value
-        program = research_system[0].value
-        if program in research_systems:
-            program = research_systems[program]
-    else:
+
+    program = None
+    # get order of customfields
+    customfields = get_issue2program_field_order()
+    # pprint.pprint( customfields )
+    # raise SystemExit( 'DEBUG' )
+
+    for fieldname in customfields:
+        # split on parts to allow nested attributes, like issue.fields.project.key
+        parts = fieldname.split('.')
+        tgt = issue.fields
+        try:
+            for p in parts:
+                tgt = getattr( tgt, p )
+        except AttributeError:
+            # if the Jira issue doesn't have this field,
+            # skip it and move on to the checking the next field
+            continue
+        if isinstance( tgt, str ):
+            lookup_key = tgt
+        elif isinstance( tgt, CustomFieldOption ):
+            lookup_key = tgt.value
+        elif isinstance( tgt, list ):
+            if len(tgt) > 1:
+                fname = get_customfield_human_name( fieldname )
+                raise UserWarning( f'Multiple values for field "{fname}" in issue {issue}' )
+            lookup_key = tgt[0].value
+        elif tgt is None:
+            continue
+        else:
+            pprint.pprint( tgt )
+            fname = get_customfield_human_name( fieldname )
+            raise UserWarning( f'Unknown value type for field "{fname}" in issue {issue}' )
+        # get lookup table for this fieldname
+        lookup_table = get_config_section( fieldname )
+        if lookup_key in lookup_table:
+            program = lookup_table[ lookup_key ]
+            break
+    if not program:
         raise UserWarning( f'No program for issue {issue}' )
-    # pprint.pprint( f"Found program: {program}" )
     return program
 
 
@@ -223,6 +289,7 @@ def print_report( weekly_data ):
             for u, effort in p.user_effort( week['days'] ).items():
                 print( f'\t\t{u}: {effort} %' )
 
+
 def print_csv( weekly_data ):
     file = io.StringIO()
     csvdata = csv.writer( file )
@@ -239,18 +306,20 @@ def print_csv( weekly_data ):
     print( file.read() )
 
 
-
-def run( current_user=None ):
+def run( current_user=None, **kwargs ):
     parts = None
     if not current_user:
         # started from cmdline
         current_user = jira_connection.Jira_Connection( libjira.jira_login() )
     else:
         reset()
-        parts = [ '--output_format=raw' ]
+        parts = libweb.process_kwargs( kwargs )
+        parts.append( '--output_format=raw' )
     args = get_args( params=parts )
     set_current_user( current_user )
-    username = current_user.current_user()
+    query_users = get_usernames()
+    # pprint.pprint( users )
+    # raise SystemExit()
 
     # get number of workdays covered in the date range
     holidays = get_holidays()
@@ -261,6 +330,8 @@ def run( current_user=None ):
     weekly_data = []
     for week in weeks:
         jql = mk_jql( week )
+        # pprint.pprint( jql )
+        # raise SystemExit()
 
         # get issues from jira
         issues = current_user.run_jql( jql )
@@ -282,12 +353,8 @@ def run( current_user=None ):
                 if w_started >= week.start and w_started <= week.end:
                     author = w.author.name
                     secs = w.timeSpentSeconds
-                    # only keep worklogs for <username>
-                    if author == username:
-                        # JQL will return tickets with worklogs in the timerange from
-                        # any user, so can't trust those results
-                        # Can't set "project" until after doing all our own
-                        # checks to validate both author and date
+                    # only add worklog entries from users in query_users
+                    if author in query_users:
                         project = projects.setdefault( program, ProjectEffort(program) )
                         project.add_worklog( ticket=si, user=author, secs=secs )
                     # else:
