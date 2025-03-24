@@ -94,7 +94,7 @@ def get_config():
     key = 'cfg'
     if key not in resources:
         envvar = 'JCL_CONFIG'
-        default_fn = '~/.config/jiracmdline/config.ini'
+        default_fn = 'conf/config.ini'
         conf_file = os.getenv( envvar, default_fn )
         cfg = configparser.ConfigParser( allow_no_value=True )
         cfg.optionxform = str

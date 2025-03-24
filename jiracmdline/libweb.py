@@ -20,8 +20,8 @@ def process_kwargs( kwargs ):
         key = sanitize_key( k )
         val = sanitize_val( v )
         parts.extend( [ f'--{key}', val ] )
-    if not parts: # if list is empty
-        parts = None
+    # if not parts: # if list is empty
+    #     parts = None
     return parts
 
 

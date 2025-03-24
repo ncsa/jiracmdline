@@ -10,6 +10,7 @@ ENV APPDIR=/app
 COPY *.py *.txt *.sh ${APPDIR}/
 COPY static/ ${APPDIR}/static/
 COPY templates/ ${APPDIR}/templates/
+COPY conf/ ${APPDIR}/conf/
 RUN pip install --no-cache-dir -r ${APPDIR}/requirements.txt
 
 WORKDIR ${APPDIR}
