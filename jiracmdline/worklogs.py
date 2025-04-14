@@ -17,6 +17,7 @@ import logging
 import os
 import pandas as pd
 import pprint
+import ldap3
 
 
 Week = collections.namedtuple( 'Week', [ 'start', 'end' ] )
@@ -87,11 +88,61 @@ def get_usernames():
         if args.user:
             users = [ args.user ]
         elif args.group:
-            users = get_current_user().group_members( args.group ).keys()
+            users = group2users( args.group )
+            # pprint.pprint( users )
+            # raise SystemExit()
         else:
             users = [ get_current_user().current_user() ]
         resources[key] = users
     return resources[key]
+
+
+def group2users( group ):
+    ''' Query LDAP for members of the group
+    '''
+    ldap_server = 'ldaps://ldap3.ncsa.illinois.edu'
+    ldap_user = None
+    ldap_password = None
+    search_base = 'dc=ncsa,dc=illinois,dc=edu'
+    search_scope = ldap3.SUBTREE
+    # attributes = ldap3.ALL_ATTRIBUTES
+    attributes = ["uniqueMember"]
+    users = []
+
+    with ldap3.Connection(ldap_server, ldap_user, ldap_password) as conn:
+        if not conn.bind():
+            msg = "Error: Could not bind to LDAP server"
+            error( msg )
+            raise UserWarning( msg )
+        search_filter = f"(cn={group})"
+        result = conn.search(search_base, search_filter, search_scope, attributes=attributes)
+        if not result:
+            msg = f"Error: Could not find group {group_name}"
+            error( msg )
+            raise UserWarning( msg )
+        entry = conn.entries[0]
+        # pprint.pprint( entry )
+        members = [ m for m in entry.uniqueMember ]
+        uids = [ m.split(',')[0].split('=')[1] for m in entry.uniqueMember ]
+        users = uids
+        logr.debug(f"uids: {uids}")
+        # raise SystemExit()
+
+        # get email for each user
+        # for u in uids:
+        #     search_filter = f"(uid={u})"
+        #     attributes = [ 'mail' ]
+        #     result = conn.search(search_base, search_filter, search_scope, attributes=attributes)
+        #     if not result:
+        #         msg = f"Error: Could not find user {u}"
+        #         # msg = f"Error: Could not find user {m}"
+        #         error( msg )
+        #         raise UserWarning( msg )
+        #     entry = conn.entries[0]
+        #     # pprint.pprint( entry )
+        #     # raise SystemExit()
+        #     users.append( entry.mail.value )
+    return users
 
 
 def get_config():
@@ -193,6 +244,12 @@ def mk_jql( week ):
     current_user = get_current_user() #instance of jira.JIRA
     if not current_user:
         raise UserWarning( 'not logged in' )
+    # author = get_current_user().current_user()
+    # args = get_args()
+    # if args.user:
+    #     author = args.user
+    # elif args.group:
+    #     author = f'membersOf("{args.group}")'
     usernames = [ f'"{u}"' for u in get_usernames() ]
     users = ','.join( usernames )
     # adjust dates for JQl formatting
@@ -200,11 +257,10 @@ def mk_jql( week ):
     startdate = ( week.start - oneday ).strftime( '%Y-%m-%d' )
     enddate = ( week.end + oneday ).strftime( '%Y-%m-%d' )
     # construct JQL
-    author = f'worklogauthor in ({users})'
+    worklogauthor = f'worklogauthor in ({users})'
     start = f'worklogdate > "{startdate}"'
     end = f'worklogdate < "{enddate}"'
-    jql = ' AND '.join( [ author, start, end ] )
-    # print( f"JQL: {jql}" )
+    jql = ' AND '.join( [ worklogauthor, start, end ] )
     return jql
 
 
@@ -322,7 +378,7 @@ def run( current_user=None, **kwargs ):
     args = get_args( params=parts )
     set_current_user( current_user )
     query_users = get_usernames()
-    # pprint.pprint( users )
+    logr.debug( f'Query Users: {query_users}' )
     # raise SystemExit()
 
     # get number of workdays covered in the date range
@@ -334,19 +390,23 @@ def run( current_user=None, **kwargs ):
     weekly_data = []
     for week in weeks:
         jql = mk_jql( week )
-        # pprint.pprint( jql )
+        logr.debug( f'JQL: {jql}' )
         # raise SystemExit()
 
         # get issues from jira
         issues = current_user.run_jql( jql )
+        # pprint.pprint( issues )
+        # raise SystemExit()
 
         # process worklogs for each issue
         projects = {}
         for i in issues:
-            # pprint.pprint( [ 'ISSUE', i ] )
+            logr.debug( [ 'ISSUE', i ] )
+            # pprint.pprint( i.raw )
+            # raise SystemExit()
             try:
                 program = issue2program( i )
-                # pprint.pprint( [ 'PROGRAM', program ] )
+                logr.debug( [ 'PROGRAM', program ] )
             except UserWarning as e:
                 error( e )
                 continue
@@ -355,14 +415,15 @@ def run( current_user=None, **kwargs ):
             for w in worklogs:
                 w_started = dateutil.parser.parse( w.started, ignoretz=True ).date()
                 if w_started >= week.start and w_started <= week.end:
+                    # author = w.author.emailAddress
                     author = w.author.name
                     secs = w.timeSpentSeconds
                     # only add worklog entries from users in query_users
                     if author in query_users:
                         project = projects.setdefault( program, ProjectEffort(program) )
                         project.add_worklog( ticket=si, user=author, secs=secs )
-                    # else:
-                    #     print( f"---SKIPing worklog author {author}" )
+                    else:
+                        logr.debug( f"---SKIPing worklog author {author}" )
 
         if len( projects ) < 1:
             warn( f'no worklogs found for week {week.start}' )
