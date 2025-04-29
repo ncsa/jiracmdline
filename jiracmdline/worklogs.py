@@ -355,8 +355,8 @@ def print_csv( weekly_data ):
     csvdata = csv.writer( file )
     for week in weekly_data:
         for k,p in week['projects'].items():
-            # pprint.pprint( p.as_csv_list() )
-            for row in p.as_csv_list():
+            # pprint.pprint( p.as_list() )
+            for row in p.as_list():
                 csvrow = [ week['startdate'] ]
                 csvrow.extend( [ str(r) for r in row ] )
                 csvdata.writerow( csvrow )

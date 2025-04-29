@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3
 
 from collections import defaultdict
+import simple_issue
 import math
 
 
@@ -16,9 +17,9 @@ class ProjectEffort:
         self.total = 0
         self.data = defaultdict(lambda: defaultdict(int)) #2-deep defaultdict
 
-    def add_worklog( self, ticket: str, user: str, secs: int ):
-        # print( f'Add: {self.name} {ticket.key}, {user} {secs}' )
-        self.data[ticket.key][user] += secs
+    def add_worklog( self, ticket: simple_issue, user: str, secs: int ):
+        # print( f'Add: {self.name} {ticket.key}, {ticket.summary}, {user} {secs}' )
+        self.data[ticket][user] += secs
         # update per-ticket, per-user, per-project totals
         self.tickets[ticket] += secs
         self.users[user] += secs
@@ -37,11 +38,12 @@ class ProjectEffort:
         # percent = secs / 3600 / num_days / user_max_hours_daily * 100
         return { u: v/36/range_hours for u,v in self.users.items() }
 
-    def as_csv_list( self ):
+    def as_list( self ):
         table = []
         for t, u_data in self.data.items():
             for u, secs in u_data.items():
-                table.append( [ self.name, t, u, secs ] )
+                # project_name, ticket_key, ticket_summary, user, user_secs
+                table.append( [ self.name, t.key, t.summary, u, secs ] )
         return table
 
     def urls_for_all_tickets( self ):
