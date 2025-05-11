@@ -5,7 +5,6 @@ from simple_issue import simple_issue
 import argparse
 import collections
 import configparser
-import csv
 import datetime
 import dateutil
 import io
@@ -56,6 +55,7 @@ def get_args( params=None ):
             choices=['text', 'csv', 'raw' ],
             default='text',
         )
+        parser.add_argument( '--webcsv', help=argparse.SUPPRESS )
         parser.add_argument( '-n', '--num_weeks',
             type=int,
             default=4,
@@ -350,20 +350,35 @@ def print_report( weekly_data ):
                 print( f'\t\t{u}: {effort} %' )
 
 
-def print_csv( weekly_data ):
-    file = io.StringIO()
-    csvdata = csv.writer( file )
+# def print_csv( weekly_data ):
+#     file = io.StringIO()
+#     csvdata = csv.writer( file )
+#     for week in weekly_data:
+#         for k,p in week['projects'].items():
+#             # pprint.pprint( p.as_list() )
+#             for row in p.as_list():
+#                 csvrow = [ week['startdate'] ]
+#                 csvrow.extend( [ str(r) for r in row ] )
+#                 csvdata.writerow( csvrow )
+#                 # print( ','.join( [str(r) for r in row ] ) )
+#                 # rows.append( row )
+#     file.seek(0)
+#     print( file.read() )
+
+
+def mk_csv( weekly_data ):
+    table = []
+    headers = ['startdate','program','issue','summary','user','seconds']
     for week in weekly_data:
-        for k,p in week['projects'].items():
+        for pname,p in week['projects'].items():
             # pprint.pprint( p.as_list() )
             for row in p.as_list():
-                csvrow = [ week['startdate'] ]
-                csvrow.extend( [ str(r) for r in row ] )
-                csvdata.writerow( csvrow )
+                data_row = [ week['startdate'] ]
+                data_row.extend( [ str(r) for r in row ] )
+                table.append( data_row )
                 # print( ','.join( [str(r) for r in row ] ) )
                 # rows.append( row )
-    file.seek(0)
-    print( file.read() )
+    return pd.DataFrame( data=table, columns=headers ).to_csv( index=False )
 
 
 def run( current_user=None, **kwargs ):
@@ -438,13 +453,16 @@ def run( current_user=None, **kwargs ):
     if args.output_format == 'text':
         print_report( weekly_data )
     elif args.output_format == 'csv':
-        print_csv( weekly_data )
-    else:
-        return {
+        print( mk_csv( weekly_data ) )
+    elif args.output_format == 'raw':
+        rv = {
             'weekly_data': weekly_data,
             'errors': get_errors(),
             'messages': get_warnings(),
         }
+        if args.webcsv:
+            rv['csv'] = mk_csv( weekly_data )
+        return rv
 
 
 if __name__ == '__main__':

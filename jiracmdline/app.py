@@ -2,12 +2,13 @@ import datetime
 import flask
 import flask_login
 import libweb
+import logging
 import os
 import secrets
 import user
-import logging
-
 import pprint
+
+from io import BytesIO
 
 logfmt = '%(levelname)s:%(funcName)s[%(lineno)d] %(message)s'
 loglvl = logging.INFO
@@ -288,6 +289,8 @@ def do_task_tracking():
     valid_params=[ 'user', 'group', 'num_weeks' ]
     params = {}
     data = {}
+    rv = None
+    do_csv = False
     try:
         for k in valid_params:
             if k in flask.request.args:
@@ -298,14 +301,30 @@ def do_task_tracking():
         raise e
         params = {}
     params['current_user'] = flask_login.current_user
+    # special handling for web format = csv
+    if 'format' in flask.request.args and flask.request.args['format'] == 'csv':
+        do_csv = True
+        params['webcsv'] = '1'
     try:
         data = worklogs.run( **params )
     except UserWarning as e:
         data[ 'errors' ] = e.args
-    return flask.render_template(
+    if do_csv:
+        response_stream = BytesIO(data['csv'].encode())
+        rv = flask.send_file(
+            response_stream,
+            mimetype="text/csv",
+            as_attachment=True,
+            download_name="worklogs.csv",
+            )
+    else:
+        params.pop( 'current_user' ) #don't send user to the template
+        rv = flask.render_template(
         'worklogs.html',
+        params=params,
         **data,
-    )
+        )
+    return rv
 
 
 if __name__ == '__main__':

@@ -10,7 +10,22 @@
 {% block title %}Worklogs{% endblock title %}
 
 {% block content %}
-<h1>Worklog Report</h1>
+<table class="borderless">
+  <tr class="borderless">
+    <td class="borderless"><h1>Worklog Report</h1></td>
+    <td class="borderless" style="padding-left:1em;">
+      <form method="get">
+        <input type="hidden" name="format" value="csv">
+        {% if params | length > 0 %}
+          {% for name,value in params.items() %}
+            <input type="hidden" name="{{name}}" value="{{value}}">
+          {% endfor %}
+        {% endif %}
+        <button type="submit" formaction="/worklogs">Download CSV</button>
+      </form>
+    </td>
+  </tr>
+</table>
 <div class="row">
   {% for wd in weekly_data %}
   <div class="section">
